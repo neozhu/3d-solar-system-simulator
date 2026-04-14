@@ -14,9 +14,9 @@ const InfoPanel: React.FC = () => {
     <AnimatePresence>
       {planet && (
         <motion.div
-          initial={{ opacity: 0, x: 50, filter: 'blur(10px)' }}
-          animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
-          exit={{ opacity: 0, x: 50, filter: 'blur(10px)', transition: { duration: 0.2 } }}
+          initial={{ opacity: 0, x: 50 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: 50, transition: { duration: 0.2 } }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
           className="w-80 bg-space-800/80 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden drop-shadow-2xl"
         >

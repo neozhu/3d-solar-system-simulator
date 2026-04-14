@@ -1,7 +1,8 @@
 import React, { Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { Stars } from '@react-three/drei';
-import { EffectComposer, Bloom } from '@react-three/postprocessing';
+import { Stars, Sparkles } from '@react-three/drei';
+import { EffectComposer, Bloom, Vignette, ChromaticAberration, Noise } from '@react-three/postprocessing';
+import { BlendFunction } from 'postprocessing';
 import * as THREE from 'three';
 
 import CameraController from './CameraController';
@@ -12,16 +13,16 @@ import { solarSystemData } from '../../data/solarSystemData';
 const SolarSystemScene: React.FC = () => {
   return (
     <Canvas 
-      camera={{ fov: 45, far: 5000, position: [0, 100, 200] }}
+      camera={{ fov: 45, far: 8000, position: [0, 150, 300] }}
       gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping }}
     >
-      <color attach="background" args={['#020205']} />
-      
-      {/* Global Illumination */}
-      <ambientLight intensity={0.05} color={"#ffffff"} />
+      <color attach="background" args={['#010103']} />
       
       {/* Background environment */}
-      <Stars radius={300} depth={50} count={10000} factor={4} saturation={0} fade speed={1} />
+      <Stars radius={400} depth={50} count={12000} factor={5} saturation={0} fade speed={1} />
+      
+      {/* Cosmic Dust / Ambient Space Particles for Parallax depth */}
+      <Sparkles count={4000} scale={1500} size={1.5} speed={0.2} opacity={0.15} color="#c8d6e5" />
 
       <Suspense fallback={null}>
         <CameraController />
@@ -34,15 +35,29 @@ const SolarSystemScene: React.FC = () => {
           return <PlanetMesh key={planet.id} data={planet} />;
         })}
 
-        {/* Post Processing for Sun's glow */}
-        <EffectComposer disableNormalPass multisampling={4}>
+        {/* Cinematic Post Processing (Temporarily Disabled for Debugging) */}
+        {/* <EffectComposer disableNormalPass multisampling={4}>
           <Bloom 
-            luminanceThreshold={0.5} 
+            luminanceThreshold={0.2} 
             luminanceSmoothing={0.9} 
-            intensity={1.5} 
+            intensity={1.2} 
             mipmapBlur
           />
-        </EffectComposer>
+          <ChromaticAberration 
+            blendFunction={BlendFunction.NORMAL} 
+            offset={new THREE.Vector2(0.0005, 0.0005)} 
+          />
+          <Noise 
+            premultiply 
+            blendFunction={BlendFunction.SCREEN} 
+            opacity={0.3} 
+          />
+          <Vignette 
+            offset={0.4} 
+            darkness={0.6} 
+            blendFunction={BlendFunction.NORMAL} 
+          />
+        </EffectComposer> */}
       </Suspense>
     </Canvas>
   );

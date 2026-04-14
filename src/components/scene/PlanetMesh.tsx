@@ -1,10 +1,11 @@
-import React, { useRef, useMemo } from 'react';
+import React, { useRef, useMemo, useState, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Html } from '@react-three/drei';
+import { Html, Trail } from '@react-three/drei';
 import * as THREE from 'three';
 import { PlanetData } from '../../data/solarSystemData';
 import { useSimulationStore } from '../../store/useSimulationStore';
 import { getScaledRadius, getScaledDistance, calculateOrbitalAngle, calculateRotationAngle } from '../../utils/scaling';
+import Atmosphere from './Atmosphere';
 
 interface PlanetMeshProps {
   data: PlanetData;
@@ -23,7 +24,44 @@ const PlanetMesh: React.FC<PlanetMeshProps> = ({ data }) => {
   
   const isSelected = useSimulationStore(state => state.selectedPlanetId === data.id);
 
-  // Pre-calculate orbit path points for the line
+  const [colorMap, setColorMap] = useState<THREE.Texture | null>(null);
+  const [ringMap, setRingMap] = useState<THREE.Texture | null>(null);
+  const [bumpMap, setBumpMap] = useState<THREE.Texture | null>(null);
+  const [specularMap, setSpecularMap] = useState<THREE.Texture | null>(null);
+  const [cloudsMap, setCloudsMap] = useState<THREE.Texture | null>(null);
+
+  // Cloud rotation ref
+  const cloudsRef = useRef<THREE.Mesh>(null);
+
+  useEffect(() => {
+    const loader = new THREE.TextureLoader();
+    if (data.textureUrl) {
+      loader.load(data.textureUrl, (tex) => {
+        tex.colorSpace = THREE.SRGBColorSpace;
+        setColorMap(tex);
+      });
+    }
+    if (data.bumpMapUrl) {
+      loader.load(data.bumpMapUrl, (tex) => setBumpMap(tex));
+    }
+    if (data.specularMapUrl) {
+      loader.load(data.specularMapUrl, (tex) => setSpecularMap(tex));
+    }
+    if (data.cloudsMapUrl) {
+      loader.load(data.cloudsMapUrl, (tex) => {
+        tex.colorSpace = THREE.SRGBColorSpace;
+        setCloudsMap(tex);
+      });
+    }
+    if (data.hasRings && data.ringTextureUrl) {
+      loader.load(data.ringTextureUrl, (tex) => {
+        tex.colorSpace = THREE.SRGBColorSpace;
+        setRingMap(tex);
+      });
+    }
+  }, [data.textureUrl, data.ringTextureUrl, data.bumpMapUrl, data.specularMapUrl, data.cloudsMapUrl, data.hasRings]);
+
+  // Pre-calculate orbit path points for the faint static line
   const orbitPoints = useMemo(() => {
     const points = [];
     const segments = 128;
@@ -50,6 +88,11 @@ const PlanetMesh: React.FC<PlanetMeshProps> = ({ data }) => {
     if (meshRef.current) {
       meshRef.current.rotation.y = calculateRotationAngle(data.rotationPeriodDays, timeElapsedDays);
     }
+    
+    // Cloud layer rotates slightly faster than the planet
+    if (cloudsRef.current) {
+      cloudsRef.current.rotation.y = calculateRotationAngle(data.rotationPeriodDays * 0.85, timeElapsedDays);
+    }
   });
 
   const handleClick = (e: any) => {
@@ -59,15 +102,29 @@ const PlanetMesh: React.FC<PlanetMeshProps> = ({ data }) => {
 
   return (
     <group>
-      {/* Orbit Line */}
+      {/* Static Orbit Line */}
       {showOrbits && scaledDistance > 0 && (
         <line geometry={orbitPathGeometry}>
-          <lineBasicMaterial attach="material" color="#ffffff" transparent opacity={0.15} />
+          <lineBasicMaterial attach="material" color="#ffffff" transparent opacity={0.05} />
         </line>
       )}
       
       {/* Planet Group rotating around sun */}
       <group ref={orbitGroupRef}>
+        
+        {/* Dynamic Comet-like Trail */}
+        {showOrbits && scaledDistance > 0 && (
+          <Trail
+            width={scaledRadius * 3}
+            length={150} // length of the trail
+            color={new THREE.Color(data.color)}
+            attenuation={(t) => t * t}
+            target={meshRef}
+          >
+            <meshBasicMaterial opacity={0.3} transparent />
+          </Trail>
+        )}
+
         {/* Offset planet by distance */}
         <group position={[scaledDistance, 0, 0]}>
           
@@ -75,43 +132,76 @@ const PlanetMesh: React.FC<PlanetMeshProps> = ({ data }) => {
           <group rotation={[0, 0, THREE.MathUtils.degToRad(data.axialTiltDegrees)]}>
             
             {/* The Planet itself - spins on its local Y axis */}
-            <mesh 
-              ref={meshRef} 
-              onClick={handleClick}
-              onPointerOver={() => document.body.style.cursor = 'pointer'}
-              onPointerOut={() => document.body.style.cursor = 'default'}
-              name={data.id}
-            >
-              <sphereGeometry args={[scaledRadius, 64, 64]} />
-              <meshStandardMaterial 
-                color={data.color} 
-                roughness={0.7}
-                metalness={0.1}
-              />
+            <group>
+              <mesh 
+                ref={meshRef} 
+                onClick={handleClick}
+                onPointerOver={() => document.body.style.cursor = 'pointer'}
+                onPointerOut={() => document.body.style.cursor = 'default'}
+                name={data.id}
+              >
+                <sphereGeometry args={[scaledRadius, 64, 64]} />
+                <meshStandardMaterial 
+                  color={colorMap ? '#ffffff' : data.color} 
+                  map={colorMap || null}
+                  bumpMap={bumpMap || null}
+                  bumpScale={bumpMap ? 0.05 : 0}
+                  roughnessMap={specularMap || null} // Use specular map as roughness (invert logic handles by some textures, but let's fall back to visual tweak)
+                  roughness={specularMap ? 0.8 : 0.7} 
+                  metalness={specularMap ? 0.2 : 0.1}
+                />
+                
+                {/* Selection highlight */}
+                {isSelected && (
+                  <mesh>
+                    <sphereGeometry args={[scaledRadius * 1.1, 32, 32]} />
+                    <meshBasicMaterial color="#ffffff" transparent opacity={0.2} wireframe />
+                  </mesh>
+                )}
+              </mesh>
               
-              {/* Selection highlight */}
-              {isSelected && (
-                <mesh>
-                  <sphereGeometry args={[scaledRadius * 1.1, 32, 32]} />
-                  <meshBasicMaterial color="#ffffff" transparent opacity={0.2} wireframe />
+              {/* Cloud Layer overrides */}
+              {cloudsMap && (
+                <mesh ref={cloudsRef} pointerEvents="none">
+                  <sphereGeometry args={[scaledRadius * 1.01, 64, 64]} />
+                  <meshStandardMaterial 
+                    map={cloudsMap}
+                    transparent={true}
+                    opacity={0.6}
+                    blending={THREE.AdditiveBlending}
+                    depthWrite={false}
+                  />
                 </mesh>
               )}
-            </mesh>
+              
+              {/* Atmospheric Glow */}
+              {data.hasAtmosphere && (
+                <Atmosphere radius={cloudsMap ? scaledRadius * 1.02 : scaledRadius} color={data.color} />
+              )}
+            </group>
 
             {/* Saturn's Rings - Decoupled from the planet's rapid Y-spin to avoid aliasing artifacts */}
             {data.hasRings && (
               <mesh rotation={[Math.PI / 2, 0, 0]}>
-                <ringGeometry args={[scaledRadius * 1.4, scaledRadius * 2.2, 64]} />
-                <meshBasicMaterial color={data.color} transparent opacity={0.6} side={THREE.DoubleSide} />
+                <ringGeometry args={[scaledRadius * 1.2, scaledRadius * 2.2, 128]} />
+                <meshStandardMaterial 
+                  color={ringMap ? '#ffffff' : data.color} 
+                  map={ringMap || null}
+                  transparent 
+                  opacity={ringMap ? 0.9 : 0.6} 
+                  side={THREE.DoubleSide} 
+                  alphaMap={ringMap || null} // Uses texture rgb as alpha for rings
+                  alphaTest={0.01}
+                />
               </mesh>
             )}
           </group>
 
           {/* HTML Label */}
           {showLabels && (
-            <Html position={[0, -scaledRadius * 1.5, 0]} center zIndexRange={[100, 0]}>
+            <Html position={[0, -scaledRadius * 2.0, 0]} center zIndexRange={[100, 0]}>
               <div 
-                className={`text-sm tracking-wider font-semibold pointer-events-none transition-opacity duration-300 ${isSelected ? 'text-white opacity-100 drop-shadow-md' : 'text-white/60 opacity-100 hover:opacity-100'}`}
+                className={`text-sm tracking-wider font-semibold pointer-events-none transition-opacity duration-300 ${isSelected ? 'text-white opacity-100 drop-shadow-md' : 'text-white/50 opacity-100 hover:text-white/80'}`}
                 style={{ textShadow: '0px 0px 4px black' }}
               >
                 {data.name}
