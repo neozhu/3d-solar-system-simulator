@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ExternalLink } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useSimulationStore } from '../../store/useSimulationStore';
 import { solarSystemData } from '../../data/solarSystemData';
 

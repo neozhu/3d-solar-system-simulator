@@ -66,6 +66,28 @@ The project follows a clean, modular structure:
 - `src/store/`: Centralized state management utilizing Zustand for handling global simulator states like simulation speed and currently selected targets.
 - `src/utils/`: Dedicated utilities for mathematics, astronomical data, type definitions, and realistic or stylized space scaling.
 
+## 🌐 Deploy to GitHub Pages
+
+This repository is configured for automatic deployment with GitHub Actions.
+
+### One-time setup
+
+1. Push this project to the `main` branch of your repository.
+2. In GitHub, open **Settings → Pages**.
+3. Under **Build and deployment**, choose **Source: GitHub Actions**.
+
+### Deployment behavior
+
+- Workflow file: `.github/workflows/deploy-pages.yml`
+- Trigger: push to `main` or `master`
+- Output: Vite build from `dist/`
+- Site URL: `https://neozhu.github.io/3d-solar-system-simulator/`
+
+### Notes
+
+- Vite `base` is set for this repository path during build.
+- Local development remains unchanged (`npm run dev`).
+
 ## 🤝 Acknowledgments
 
 - Built with modern 3D web technologies to provide an engaging educational and interactive sandbox.

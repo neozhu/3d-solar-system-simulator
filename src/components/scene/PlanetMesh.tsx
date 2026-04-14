@@ -1,6 +1,6 @@
 import React, { useRef, useMemo, useState, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Html, Trail } from '@react-three/drei';
+import { Html, Trail, Line } from '@react-three/drei';
 import * as THREE from 'three';
 import { PlanetData } from '../../data/solarSystemData';
 import { useSimulationStore } from '../../store/useSimulationStore';
@@ -72,10 +72,6 @@ const PlanetMesh: React.FC<PlanetMeshProps> = ({ data }) => {
     return points;
   }, [scaledDistance]);
 
-  const orbitPathGeometry = useMemo(() => {
-    return new THREE.BufferGeometry().setFromPoints(orbitPoints);
-  }, [orbitPoints]);
-
   useFrame(() => {
     const timeElapsedDays = useSimulationStore.getState().globalTimeElapsedDays;
     
@@ -104,9 +100,7 @@ const PlanetMesh: React.FC<PlanetMeshProps> = ({ data }) => {
     <group>
       {/* Static Orbit Line */}
       {showOrbits && scaledDistance > 0 && (
-        <line geometry={orbitPathGeometry}>
-          <lineBasicMaterial attach="material" color="#ffffff" transparent opacity={0.05} />
-        </line>
+        <Line points={orbitPoints} color="#ffffff" transparent opacity={0.05} />
       )}
       
       {/* Planet Group rotating around sun */}
@@ -119,7 +113,7 @@ const PlanetMesh: React.FC<PlanetMeshProps> = ({ data }) => {
             length={150} // length of the trail
             color={new THREE.Color(data.color)}
             attenuation={(t) => t * t}
-            target={meshRef}
+            target={meshRef as React.MutableRefObject<THREE.Object3D>}
           >
             <meshBasicMaterial opacity={0.3} transparent />
           </Trail>
@@ -162,7 +156,7 @@ const PlanetMesh: React.FC<PlanetMeshProps> = ({ data }) => {
               
               {/* Cloud Layer overrides */}
               {cloudsMap && (
-                <mesh ref={cloudsRef} pointerEvents="none">
+                <mesh ref={cloudsRef}>
                   <sphereGeometry args={[scaledRadius * 1.01, 64, 64]} />
                   <meshStandardMaterial 
                     map={cloudsMap}

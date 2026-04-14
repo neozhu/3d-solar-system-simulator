@@ -1,8 +1,6 @@
 import React, { Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Stars, Sparkles } from '@react-three/drei';
-import { EffectComposer, Bloom, Vignette, ChromaticAberration, Noise } from '@react-three/postprocessing';
-import { BlendFunction } from 'postprocessing';
 import * as THREE from 'three';
 
 import CameraController from './CameraController';

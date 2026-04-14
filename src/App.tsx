@@ -1,4 +1,3 @@
-import React from 'react';
 import SolarSystemScene from './components/scene/SolarSystemScene';
 import Overlay from './components/ui/Overlay';
 

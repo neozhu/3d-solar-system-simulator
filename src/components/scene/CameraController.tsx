@@ -3,32 +3,18 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { useSimulationStore } from '../../store/useSimulationStore';
-import { solarSystemData } from '../../data/solarSystemData';
-import { getScaledRadius } from '../../utils/scaling';
 
 const CameraController: React.FC = () => {
   const controlsRef = useRef<any>(null);
   const { camera, scene } = useThree();
   const selectedPlanetId = useSimulationStore(state => state.selectedPlanetId);
-  
-  // Track target position for semantic orbital camera
-  const targetPos = useRef(new THREE.Vector3());
 
   // Set initial camera position
   useEffect(() => {
     camera.position.set(0, 80, 150);
   }, [camera]);
 
-  useFrame(() => {
-    if (!controlsRef.current) return;
-    
-    // We update simulation time here since Camera is active every frame
-    const delta = globalThis.performance.now(); // Not perfect but good enough for demo if useFrame delta isn't used
-    // Actually use the r3f state delta
-  });
-  
-  // Separate useFrame for delta injection
-  useFrame((state, delta) => {
+  useFrame((_, delta) => {
     useSimulationStore.getState().incrementTime(delta);
     
     // Camera follow logic
