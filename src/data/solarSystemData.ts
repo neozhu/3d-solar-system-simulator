@@ -14,21 +14,22 @@ export interface PlanetData {
   bumpMapUrl?: string;       // Elevation/Bump map
   specularMapUrl?: string;   // Specular/Roughness map
   cloudsMapUrl?: string;     // Cloud layer map
+  textureColor?: string;     // Optional tint for the color map
   hasAtmosphere?: boolean;
 }
 
 const textureMap = {
-  sun: 'https://commons.wikimedia.org/wiki/Special:FilePath/Solarsystemscope_texture_2k_sun.jpg',
-  mercury: 'https://commons.wikimedia.org/wiki/Special:FilePath/Solarsystemscope_texture_2k_mercury.jpg',
-  venus: 'https://commons.wikimedia.org/wiki/Special:FilePath/Solarsystemscope_texture_2k_venus_surface.jpg',
-  earth: 'https://commons.wikimedia.org/wiki/Special:FilePath/Solarsystemscope_texture_2k_earth_daymap.jpg',
-  earthClouds: 'https://commons.wikimedia.org/wiki/Special:FilePath/Solarsystemscope_texture_2k_earth_clouds.jpg',
-  mars: 'https://commons.wikimedia.org/wiki/Special:FilePath/Solarsystemscope_texture_2k_mars.jpg',
-  jupiter: 'https://commons.wikimedia.org/wiki/Special:FilePath/Solarsystemscope_texture_2k_jupiter.jpg',
-  saturn: 'https://commons.wikimedia.org/wiki/Special:FilePath/Solarsystemscope_texture_2k_saturn.jpg',
-  saturnRing: 'https://commons.wikimedia.org/wiki/Special:FilePath/Solarsystemscope_texture_2k_saturn_ring_alpha.png',
-  uranus: 'https://commons.wikimedia.org/wiki/Special:FilePath/Solarsystemscope_texture_2k_uranus.jpg',
-  neptune: 'https://commons.wikimedia.org/wiki/Special:FilePath/Solarsystemscope_texture_2k_neptune.jpg'
+  sun: 'https://upload.wikimedia.org/wikipedia/commons/c/cb/Solarsystemscope_texture_2k_sun.jpg',
+  mercury: 'https://upload.wikimedia.org/wikipedia/commons/9/92/Solarsystemscope_texture_2k_mercury.jpg',
+  venus: 'https://upload.wikimedia.org/wikipedia/commons/4/40/Solarsystemscope_texture_2k_venus_surface.jpg',
+  earth: 'https://upload.wikimedia.org/wikipedia/commons/c/c3/Solarsystemscope_texture_2k_earth_daymap.jpg',
+  earthClouds: 'https://upload.wikimedia.org/wikipedia/commons/e/ed/Solarsystemscope_texture_2k_earth_clouds.jpg',
+  mars: 'https://upload.wikimedia.org/wikipedia/commons/4/46/Solarsystemscope_texture_2k_mars.jpg',
+  jupiter: 'https://upload.wikimedia.org/wikipedia/commons/b/be/Solarsystemscope_texture_2k_jupiter.jpg',
+  saturn: 'https://upload.wikimedia.org/wikipedia/commons/e/ea/Solarsystemscope_texture_2k_saturn.jpg',
+  saturnRing: 'https://upload.wikimedia.org/wikipedia/commons/7/7d/Solarsystemscope_texture_2k_saturn_ring_alpha.png',
+  uranus: 'https://upload.wikimedia.org/wikipedia/commons/9/95/Solarsystemscope_texture_2k_uranus.jpg',
+  neptune: 'https://upload.wikimedia.org/wikipedia/commons/1/1e/Solarsystemscope_texture_2k_neptune.jpg'
 };
 
 // Data approximation for visualization. 
@@ -81,6 +82,7 @@ export const solarSystemData: PlanetData[] = [
     rotationPeriodDays: 1.0,
     axialTiltDegrees: 23.44,
     color: "#4b9fe3",
+    textureColor: "#ffffff",
     textureUrl: textureMap.earth,
     cloudsMapUrl: textureMap.earthClouds,
     hasAtmosphere: true,
@@ -95,6 +97,7 @@ export const solarSystemData: PlanetData[] = [
     rotationPeriodDays: 1.03,
     axialTiltDegrees: 25.19,
     color: "#e27b58",
+    textureColor: "#b15c3b",
     textureUrl: textureMap.mars,
     hasAtmosphere: true,
     description: "The fourth planet from the Sun – a dusty, cold, desert world with a very thin atmosphere. Mars is also a dynamic planet with seasons, polar ice caps, canyons, extinct volcanoes, and evidence that it was even more active in the past."

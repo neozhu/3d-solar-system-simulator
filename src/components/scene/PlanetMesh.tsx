@@ -29,6 +29,8 @@ const PlanetMesh: React.FC<PlanetMeshProps> = ({ data }) => {
   const [bumpMap, setBumpMap] = useState<THREE.Texture | null>(null);
   const [specularMap, setSpecularMap] = useState<THREE.Texture | null>(null);
   const [cloudsMap, setCloudsMap] = useState<THREE.Texture | null>(null);
+  const useLayeredSurface = (data.id === 'earth' || data.id === 'mars') && !!colorMap;
+  const useLayeredRings = data.id === 'saturn' && !!ringMap;
 
   // Cloud rotation ref
   const cloudsRef = useRef<THREE.Mesh>(null);
@@ -135,21 +137,43 @@ const PlanetMesh: React.FC<PlanetMeshProps> = ({ data }) => {
                 name={data.id}
               >
                 <sphereGeometry args={[scaledRadius, 64, 64]} />
-                <meshStandardMaterial 
-                  color={colorMap ? '#ffffff' : data.color} 
-                  map={colorMap || null}
-                  bumpMap={bumpMap || null}
-                  bumpScale={bumpMap ? 0.05 : 0}
-                  roughnessMap={specularMap || null} // Use specular map as roughness (invert logic handles by some textures, but let's fall back to visual tweak)
-                  roughness={specularMap ? 0.8 : 0.7} 
-                  metalness={specularMap ? 0.2 : 0.1}
-                />
+                {useLayeredSurface ? (
+                  <meshBasicMaterial
+                    color={data.textureColor ?? data.color}
+                    map={colorMap || null}
+                  />
+                ) : (
+                  <meshStandardMaterial 
+                    color={colorMap ? (data.textureColor ?? data.color) : data.color}
+                    map={colorMap || null}
+                    bumpMap={bumpMap || null}
+                    bumpScale={bumpMap ? 0.05 : 0}
+                    roughnessMap={specularMap || null} // Use specular map as roughness (invert logic handles by some textures, but let's fall back to visual tweak)
+                    roughness={specularMap ? 0.8 : 0.7} 
+                    metalness={specularMap ? 0.2 : 0.1}
+                  />
+                )}
+
+                {useLayeredSurface && (
+                  <mesh scale={1.001}>
+                    <sphereGeometry args={[scaledRadius, 64, 64]} />
+                    <meshStandardMaterial
+                      color="#ffffff"
+                      roughness={1}
+                      metalness={0}
+                      transparent
+                      opacity={0.9}
+                      blending={THREE.MultiplyBlending}
+                      depthWrite={false}
+                    />
+                  </mesh>
+                )}
                 
                 {/* Selection highlight */}
                 {isSelected && (
                   <mesh>
                     <sphereGeometry args={[scaledRadius * 1.1, 32, 32]} />
-                    <meshBasicMaterial color="#ffffff" transparent opacity={0.2} wireframe />
+                    <meshBasicMaterial color="#ffffff" transparent opacity={0.08} side={THREE.BackSide} />
                   </mesh>
                 )}
               </mesh>
@@ -158,11 +182,11 @@ const PlanetMesh: React.FC<PlanetMeshProps> = ({ data }) => {
               {cloudsMap && (
                 <mesh ref={cloudsRef}>
                   <sphereGeometry args={[scaledRadius * 1.01, 64, 64]} />
-                  <meshStandardMaterial 
-                    map={cloudsMap}
+                  <meshBasicMaterial 
+                    color="#ffffff"
+                    alphaMap={cloudsMap}
                     transparent={true}
-                    opacity={0.6}
-                    blending={THREE.AdditiveBlending}
+                    opacity={0.2}
                     depthWrite={false}
                   />
                 </mesh>
@@ -176,18 +200,51 @@ const PlanetMesh: React.FC<PlanetMeshProps> = ({ data }) => {
 
             {/* Saturn's Rings - Decoupled from the planet's rapid Y-spin to avoid aliasing artifacts */}
             {data.hasRings && (
-              <mesh rotation={[Math.PI / 2, 0, 0]}>
-                <ringGeometry args={[scaledRadius * 1.2, scaledRadius * 2.2, 128]} />
-                <meshStandardMaterial 
-                  color={ringMap ? '#ffffff' : data.color} 
-                  map={ringMap || null}
-                  transparent 
-                  opacity={ringMap ? 0.9 : 0.6} 
-                  side={THREE.DoubleSide} 
-                  alphaMap={ringMap || null} // Uses texture rgb as alpha for rings
-                  alphaTest={0.01}
-                />
-              </mesh>
+              <>
+                <mesh rotation={[Math.PI / 2, 0, 0]}>
+                  <ringGeometry args={[scaledRadius * 1.2, scaledRadius * 2.2, 128]} />
+                  {useLayeredRings ? (
+                    <meshBasicMaterial
+                      color="#ffffff"
+                      map={ringMap || null}
+                      transparent
+                      opacity={1}
+                      side={THREE.DoubleSide}
+                      alphaMap={ringMap || null}
+                      alphaTest={0.02}
+                      depthWrite={false}
+                    />
+                  ) : (
+                    <meshStandardMaterial 
+                      color={data.color}
+                      map={ringMap || null}
+                      transparent 
+                      opacity={ringMap ? 0.9 : 0.6} 
+                      side={THREE.DoubleSide} 
+                      alphaMap={ringMap || null}
+                      alphaTest={0.01}
+                    />
+                  )}
+                </mesh>
+
+                {useLayeredRings && (
+                  <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, scaledRadius * 0.002, 0]}>
+                    <ringGeometry args={[scaledRadius * 1.2, scaledRadius * 2.2, 128]} />
+                    <meshStandardMaterial
+                      color="#ffffff"
+                      transparent
+                      opacity={0.4}
+                      side={THREE.DoubleSide}
+                      alphaMap={ringMap || null}
+                      alphaTest={0.02}
+                      roughness={1}
+                      metalness={0}
+                      blending={THREE.MultiplyBlending}
+                      depthWrite={false}
+                    />
+                  </mesh>
+                )}
+              </>
             )}
           </group>
 

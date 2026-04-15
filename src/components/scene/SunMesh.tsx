@@ -102,7 +102,7 @@ const SunMesh: React.FC<SunMeshProps> = ({ data }) => {
       >
         <sphereGeometry args={[scaledRadius, 64, 64]} />
         <meshBasicMaterial 
-          color={colorMap ? '#ffffff' : data.color} 
+          color={data.color}
           map={colorMap || null}
         />
         
