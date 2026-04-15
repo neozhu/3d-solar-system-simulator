@@ -17,6 +17,20 @@ export interface PlanetData {
   hasAtmosphere?: boolean;
 }
 
+const textureMap = {
+  sun: 'https://commons.wikimedia.org/wiki/Special:FilePath/Solarsystemscope_texture_2k_sun.jpg',
+  mercury: 'https://commons.wikimedia.org/wiki/Special:FilePath/Solarsystemscope_texture_2k_mercury.jpg',
+  venus: 'https://commons.wikimedia.org/wiki/Special:FilePath/Solarsystemscope_texture_2k_venus_surface.jpg',
+  earth: 'https://commons.wikimedia.org/wiki/Special:FilePath/Solarsystemscope_texture_2k_earth_daymap.jpg',
+  earthClouds: 'https://commons.wikimedia.org/wiki/Special:FilePath/Solarsystemscope_texture_2k_earth_clouds.jpg',
+  mars: 'https://commons.wikimedia.org/wiki/Special:FilePath/Solarsystemscope_texture_2k_mars.jpg',
+  jupiter: 'https://commons.wikimedia.org/wiki/Special:FilePath/Solarsystemscope_texture_2k_jupiter.jpg',
+  saturn: 'https://commons.wikimedia.org/wiki/Special:FilePath/Solarsystemscope_texture_2k_saturn.jpg',
+  saturnRing: 'https://commons.wikimedia.org/wiki/Special:FilePath/Solarsystemscope_texture_2k_saturn_ring_alpha.png',
+  uranus: 'https://commons.wikimedia.org/wiki/Special:FilePath/Solarsystemscope_texture_2k_uranus.jpg',
+  neptune: 'https://commons.wikimedia.org/wiki/Special:FilePath/Solarsystemscope_texture_2k_neptune.jpg'
+};
+
 // Data approximation for visualization. 
 // Uses real AU and real periods, but actual distances will be scaled using our scaling functions.
 export const solarSystemData: PlanetData[] = [
@@ -29,7 +43,7 @@ export const solarSystemData: PlanetData[] = [
     rotationPeriodDays: 27,
     axialTiltDegrees: 7.25,
     color: "#ffcc00",
-    textureUrl: "https://s3-us-west-2.amazonaws.com/s.cdpn.io/141228/sunmap.jpg",
+    textureUrl: textureMap.sun,
     description: "The star at the center of the Solar System. It is a nearly perfect ball of hot plasma, heated to incandescence by nuclear fusion reactions in its core."
   },
   {
@@ -41,7 +55,7 @@ export const solarSystemData: PlanetData[] = [
     rotationPeriodDays: 58.6,
     axialTiltDegrees: 0.034,
     color: "#a8a8a8",
-    textureUrl: "https://s3-us-west-2.amazonaws.com/s.cdpn.io/141228/mercurymap.jpg",
+    textureUrl: textureMap.mercury,
     hasAtmosphere: false,
     description: "The smallest planet in the Solar System and the closest to the Sun. Its orbit around the Sun takes 87.97 Earth days, the shortest of all the Sun's planets."
   },
@@ -54,7 +68,7 @@ export const solarSystemData: PlanetData[] = [
     rotationPeriodDays: -243.0, // Retrograde
     axialTiltDegrees: 177.4,
     color: "#e3bb76",
-    textureUrl: "https://s3-us-west-2.amazonaws.com/s.cdpn.io/141228/venusmap.jpg",
+    textureUrl: textureMap.venus,
     hasAtmosphere: true,
     description: "The second planet from the Sun. It is a terrestrial planet and is sometimes called Earth's 'sister planet' because of their similar size, mass, proximity to the Sun, and bulk composition."
   },
@@ -67,10 +81,8 @@ export const solarSystemData: PlanetData[] = [
     rotationPeriodDays: 1.0,
     axialTiltDegrees: 23.44,
     color: "#4b9fe3",
-    textureUrl: "https://s3-us-west-2.amazonaws.com/s.cdpn.io/141228/earthmap1k.jpg",
-    bumpMapUrl: "https://s3-us-west-2.amazonaws.com/s.cdpn.io/141228/earthbump1k.jpg",
-    specularMapUrl: "https://s3-us-west-2.amazonaws.com/s.cdpn.io/141228/earthspec1k.jpg",
-    cloudsMapUrl: "https://s3-us-west-2.amazonaws.com/s.cdpn.io/141228/earthcloudmaptrans.jpg",
+    textureUrl: textureMap.earth,
+    cloudsMapUrl: textureMap.earthClouds,
     hasAtmosphere: true,
     description: "Our home planet is the third planet from the Sun, and the only place we know of so far that's inhabited by living things."
   },
@@ -83,8 +95,7 @@ export const solarSystemData: PlanetData[] = [
     rotationPeriodDays: 1.03,
     axialTiltDegrees: 25.19,
     color: "#e27b58",
-    textureUrl: "https://s3-us-west-2.amazonaws.com/s.cdpn.io/141228/mars_1k_color.jpg",
-    bumpMapUrl: "https://raw.githubusercontent.com/jeromeetienne/threex.planets/master/images/marsbump1k.jpg",
+    textureUrl: textureMap.mars,
     hasAtmosphere: true,
     description: "The fourth planet from the Sun – a dusty, cold, desert world with a very thin atmosphere. Mars is also a dynamic planet with seasons, polar ice caps, canyons, extinct volcanoes, and evidence that it was even more active in the past."
   },
@@ -97,7 +108,7 @@ export const solarSystemData: PlanetData[] = [
     rotationPeriodDays: 0.41,
     axialTiltDegrees: 3.13,
     color: "#c99a7b",
-    textureUrl: "https://s3-us-west-2.amazonaws.com/s.cdpn.io/141228/jupiter.jpg",
+    textureUrl: textureMap.jupiter,
     description: "The largest planet in our solar system – if it were a hollow shell, 1,000 Earths could fit inside. It is a gas giant with a mass more than two and a half times that of all the other planets in the Solar System combined."
   },
   {
@@ -109,9 +120,9 @@ export const solarSystemData: PlanetData[] = [
     rotationPeriodDays: 0.45,
     axialTiltDegrees: 26.73,
     color: "#ead6b8",
-    textureUrl: "https://s3-us-west-2.amazonaws.com/s.cdpn.io/141228/saturnmap.jpg",
+    textureUrl: textureMap.saturn,
     hasRings: true,
-    ringTextureUrl: "https://s3-us-west-2.amazonaws.com/s.cdpn.io/141228/saturnringcolor.jpg",
+    ringTextureUrl: textureMap.saturnRing,
     description: "The sixth planet from the Sun and the second-largest in the Solar System, after Jupiter. It is a gas giant with an average radius of about nine and a half times that of Earth. Adorned with a dazzling, complex system of icy rings."
   },
   {
@@ -123,7 +134,7 @@ export const solarSystemData: PlanetData[] = [
     rotationPeriodDays: -0.72,
     axialTiltDegrees: 97.77,
     color: "#73d7df",
-    textureUrl: "https://s3-us-west-2.amazonaws.com/s.cdpn.io/141228/uranusmap.jpg",
+    textureUrl: textureMap.uranus,
     description: "The seventh planet from the Sun. It has the third-largest planetary radius and fourth-largest planetary mass in the Solar System. Uranus revolves on its side, rolling like a barrel rather than spinning like a top."
   },
   {
@@ -135,7 +146,7 @@ export const solarSystemData: PlanetData[] = [
     rotationPeriodDays: 0.67,
     axialTiltDegrees: 28.32,
     color: "#4b70dd",
-    textureUrl: "https://s3-us-west-2.amazonaws.com/s.cdpn.io/141228/neptunemap.jpg",
+    textureUrl: textureMap.neptune,
     description: "The eighth and farthest-known Solar planet from the Sun. In the Solar System, it is the fourth-largest planet by diameter, the third-most-massive planet, and the densest giant planet."
   }
 ];
