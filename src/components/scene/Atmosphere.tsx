@@ -17,7 +17,7 @@ uniform float coefficient;
 uniform float power;
 
 void main() {
-  float intensity = pow(coefficient - dot(vNormal, vec3(0, 0, 1.0)), power);
+  float intensity = pow(max(0.0, coefficient - dot(vNormal, vec3(0.0, 0.0, 1.0))), power);
   gl_FragColor = vec4(glowColor, intensity * 0.4); // Clamp alpha max
 }
 `;

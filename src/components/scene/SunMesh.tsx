@@ -65,25 +65,48 @@ const SunMesh: React.FC<SunMeshProps> = ({ data }) => {
       uniform vec3 color2;
       uniform float time;
       varying vec2 vUv;
+      
+      // Simple hash to get pseudo-random noise
+      float hash(float n) { return fract(sin(n) * 43758.5453123); }
+      
       void main() {
         vec2 uv = vUv - 0.5;
         float d = length(uv);
-        
-        // Animated angle/radius perturbations for heating effect
         float angle = atan(uv.y, uv.x);
-        float wobble = sin(angle * 8.0 + time * 3.0) * 0.01 + sin(angle * 5.0 - time * 2.0) * 0.005;
+        
+        // Create multiple dynamic "layers" of solar flares using overlapping frequencies
+        float flare1 = sin(angle * 12.0 + time * 1.5) * 0.5 + 0.5;
+        float flare2 = sin(angle * 22.0 - time * 1.1) * 0.5 + 0.5;
+        float flare3 = sin(angle * 8.0 + time * 0.7) * 0.5 + 0.5;
+        
+        // Composite flares
+        float flares = (flare1 * flare2 * flare3);
+        
+        // Base edge wobble for the plasma ring
+        float wobble = sin(angle * 5.0 - time * 2.0) * 0.01 + flares * 0.02;
         float animatedD = d + wobble;
         
-        // Soft gradient fade to edges - tighter for a smaller halo
-        float alpha = smoothstep(0.4, 0.22, animatedD);
+        // 1. The Core Corona (bright ring just outside the sun surface)
+        // Sun radius is exactly at d=0.25 on this plane.
+        float coronaRing = smoothstep(0.35, 0.24, animatedD) * smoothstep(0.23, 0.25, d);
         
-        // Pulsating effect for the core
-        float pulse = sin(time * 4.0) * 0.1 + 0.9; // pulse between 0.8 and 1.0
+        // 2. The Spiking Flares (shoot out further into space)
+        // High intensity flares that extend bounds and fade out
+        float flareSpikes = flares * smoothstep(0.24, 0.45, d) * smoothstep(0.45, 0.24, d) * 1.5;
         
-        // Mix hot core to orange outer smoothly
-        vec3 color = mix(color2, color1, smoothstep(0.35, 0.1, d) * pulse);
+        // Combine opacities and boost heavily
+        float alpha = clamp(coronaRing + flareSpikes, 0.0, 1.0);
         
-        gl_FragColor = vec4(color, alpha * 0.9);
+        // Dynamic pulsate
+        float pulse = sin(time * 3.0) * 0.08 + 0.92;
+        
+        // Rich cinematic coloring
+        // The innermost edge is blazing white/yellow, fading out to deep bloody orange and then dark red
+        vec3 deepRed = vec3(0.6, 0.05, 0.0);
+        vec3 c = mix(deepRed, color2, smoothstep(0.38, 0.30, d)); // Deep red to orange
+        c = mix(c, color1, smoothstep(0.30, 0.24, d) * pulse);    // Orange to hot white
+        
+        gl_FragColor = vec4(c, alpha * 0.95);
       }
     `,
     transparent: true,
@@ -102,7 +125,8 @@ const SunMesh: React.FC<SunMeshProps> = ({ data }) => {
       >
         <sphereGeometry args={[scaledRadius, 64, 64]} />
         <meshBasicMaterial 
-          color={data.color}
+          key={colorMap ? 'textured' : 'fallback'}
+          color={colorMap ? '#ffffff' : data.color}
           map={colorMap || null}
         />
         

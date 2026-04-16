@@ -30,7 +30,7 @@ const PlanetMesh: React.FC<PlanetMeshProps> = ({ data }) => {
   const [specularMap, setSpecularMap] = useState<THREE.Texture | null>(null);
   const [cloudsMap, setCloudsMap] = useState<THREE.Texture | null>(null);
   const useTexturedSurface = !!colorMap;
-  const useLayeredLighting = (data.id === 'earth' || data.id === 'mars') && !!colorMap;
+  const useLayeredLighting = data.id !== 'sun' && !!colorMap;
   const useLayeredRings = data.id === 'saturn' && !!ringMap;
 
   // Cloud rotation ref
@@ -156,16 +156,17 @@ const PlanetMesh: React.FC<PlanetMeshProps> = ({ data }) => {
                 )}
 
                 {useLayeredLighting && (
-                  <mesh scale={1.001}>
+                  <mesh>
                     <sphereGeometry args={[scaledRadius, 64, 64]} />
-                    <meshStandardMaterial
+                    <meshLambertMaterial
                       color="#ffffff"
-                      roughness={1}
-                      metalness={0}
                       transparent
                       opacity={0.9}
                       blending={THREE.MultiplyBlending}
                       depthWrite={false}
+                      polygonOffset={true}
+                      polygonOffsetFactor={-1}
+                      polygonOffsetUnits={-1}
                     />
                   </mesh>
                 )}
@@ -229,19 +230,20 @@ const PlanetMesh: React.FC<PlanetMeshProps> = ({ data }) => {
                 </mesh>
 
                 {useLayeredRings && (
-                  <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, scaledRadius * 0.002, 0]}>
+                  <mesh rotation={[Math.PI / 2, 0, 0]}>
                     <ringGeometry args={[scaledRadius * 1.2, scaledRadius * 2.2, 128]} />
-                    <meshStandardMaterial
+                    <meshLambertMaterial
                       color="#ffffff"
                       transparent
                       opacity={0.4}
                       side={THREE.DoubleSide}
                       alphaMap={ringMap || null}
                       alphaTest={0.02}
-                      roughness={1}
-                      metalness={0}
                       blending={THREE.MultiplyBlending}
                       depthWrite={false}
+                      polygonOffset={true}
+                      polygonOffsetFactor={-1}
+                      polygonOffsetUnits={-1}
                     />
                   </mesh>
                 )}
