@@ -18,18 +18,20 @@ export interface PlanetData {
   hasAtmosphere?: boolean;
 }
 
+const textureBaseUrl = `${import.meta.env.BASE_URL}textures`;
+
 const textureMap = {
-  sun: 'https://upload.wikimedia.org/wikipedia/commons/c/cb/Solarsystemscope_texture_2k_sun.jpg',
-  mercury: 'https://upload.wikimedia.org/wikipedia/commons/9/92/Solarsystemscope_texture_2k_mercury.jpg',
-  venus: 'https://upload.wikimedia.org/wikipedia/commons/4/40/Solarsystemscope_texture_2k_venus_surface.jpg',
-  earth: 'https://upload.wikimedia.org/wikipedia/commons/c/c3/Solarsystemscope_texture_2k_earth_daymap.jpg',
-  earthClouds: 'https://upload.wikimedia.org/wikipedia/commons/e/ed/Solarsystemscope_texture_2k_earth_clouds.jpg',
-  mars: 'https://upload.wikimedia.org/wikipedia/commons/4/46/Solarsystemscope_texture_2k_mars.jpg',
-  jupiter: 'https://upload.wikimedia.org/wikipedia/commons/b/be/Solarsystemscope_texture_2k_jupiter.jpg',
-  saturn: 'https://upload.wikimedia.org/wikipedia/commons/e/ea/Solarsystemscope_texture_2k_saturn.jpg',
-  saturnRing: 'https://upload.wikimedia.org/wikipedia/commons/7/7d/Solarsystemscope_texture_2k_saturn_ring_alpha.png',
-  uranus: 'https://upload.wikimedia.org/wikipedia/commons/9/95/Solarsystemscope_texture_2k_uranus.jpg',
-  neptune: 'https://upload.wikimedia.org/wikipedia/commons/1/1e/Solarsystemscope_texture_2k_neptune.jpg'
+  sun: `${textureBaseUrl}/sun.jpg`,
+  mercury: `${textureBaseUrl}/mercury.jpg`,
+  venus: `${textureBaseUrl}/venus.jpg`,
+  earth: `${textureBaseUrl}/earth.jpg`,
+  earthClouds: `${textureBaseUrl}/earth-clouds.jpg`,
+  mars: `${textureBaseUrl}/mars.jpg`,
+  jupiter: `${textureBaseUrl}/jupiter.jpg`,
+  saturn: `${textureBaseUrl}/saturn.jpg`,
+  saturnRing: `${textureBaseUrl}/saturn-ring.png`,
+  uranus: `${textureBaseUrl}/uranus.jpg`,
+  neptune: `${textureBaseUrl}/neptune.jpg`
 };
 
 // Data approximation for visualization. 

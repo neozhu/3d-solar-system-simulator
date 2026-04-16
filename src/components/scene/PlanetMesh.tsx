@@ -29,7 +29,8 @@ const PlanetMesh: React.FC<PlanetMeshProps> = ({ data }) => {
   const [bumpMap, setBumpMap] = useState<THREE.Texture | null>(null);
   const [specularMap, setSpecularMap] = useState<THREE.Texture | null>(null);
   const [cloudsMap, setCloudsMap] = useState<THREE.Texture | null>(null);
-  const useLayeredSurface = (data.id === 'earth' || data.id === 'mars') && !!colorMap;
+  const useTexturedSurface = !!colorMap;
+  const useLayeredLighting = (data.id === 'earth' || data.id === 'mars') && !!colorMap;
   const useLayeredRings = data.id === 'saturn' && !!ringMap;
 
   // Cloud rotation ref
@@ -137,14 +138,14 @@ const PlanetMesh: React.FC<PlanetMeshProps> = ({ data }) => {
                 name={data.id}
               >
                 <sphereGeometry args={[scaledRadius, 64, 64]} />
-                {useLayeredSurface ? (
+                {useTexturedSurface ? (
                   <meshBasicMaterial
-                    color={data.textureColor ?? data.color}
+                    color={data.textureColor ?? '#ffffff'}
                     map={colorMap || null}
                   />
                 ) : (
                   <meshStandardMaterial 
-                    color={colorMap ? (data.textureColor ?? data.color) : data.color}
+                    color={colorMap ? (data.textureColor ?? '#ffffff') : data.color}
                     map={colorMap || null}
                     bumpMap={bumpMap || null}
                     bumpScale={bumpMap ? 0.05 : 0}
@@ -154,7 +155,7 @@ const PlanetMesh: React.FC<PlanetMeshProps> = ({ data }) => {
                   />
                 )}
 
-                {useLayeredSurface && (
+                {useLayeredLighting && (
                   <mesh scale={1.001}>
                     <sphereGeometry args={[scaledRadius, 64, 64]} />
                     <meshStandardMaterial

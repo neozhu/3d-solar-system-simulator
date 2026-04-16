@@ -6,16 +6,16 @@ const path = require('node:path');
 const planetMeshPath = path.join(__dirname, '..', 'src', 'components', 'scene', 'PlanetMesh.tsx');
 const planetMeshSource = fs.readFileSync(planetMeshPath, 'utf8');
 
-test('Earth uses the layered surface path so its daymap remains visible under the sun light', () => {
+test('Only Earth and Mars use the layered lighting overlay on top of their base texture', () => {
   assert.match(
     planetMeshSource,
-    /data\.id === 'earth' \|\| data\.id === 'mars'[\s\S]*useLayeredSurface[\s\S]*<meshBasicMaterial[\s\S]*map=\{colorMap \|\| null\}[\s\S]*<meshStandardMaterial[\s\S]*blending=\{THREE\.MultiplyBlending\}/,
+    /const useLayeredLighting = \(data\.id === 'earth' \|\| data\.id === 'mars'\) && !!colorMap;[\s\S]*<meshBasicMaterial[\s\S]*color=\{data\.textureColor \?\? '#ffffff'\}[\s\S]*map=\{colorMap \|\| null\}[\s\S]*\{useLayeredLighting && \(/,
   );
 });
 
-test('Mars also uses the layered surface path so texture detail and day-night shading coexist', () => {
+test('The layered lighting overlay stays white and multiply-blended so only Earth and Mars get shading detail', () => {
   assert.match(
     planetMeshSource,
-    /data\.id === 'earth' \|\| data\.id === 'mars'[\s\S]*useLayeredSurface[\s\S]*<meshBasicMaterial[\s\S]*map=\{colorMap \|\| null\}[\s\S]*<meshStandardMaterial[\s\S]*blending=\{THREE\.MultiplyBlending\}/,
+    /<meshStandardMaterial[\s\S]*color="#ffffff"[\s\S]*blending=\{THREE\.MultiplyBlending\}/,
   );
 });
