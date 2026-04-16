@@ -2,6 +2,9 @@
 
 A visually striking, physically grounded, production-quality 3D Solar System simulator running directly in your browser. This application combines accurate astronomical simulation logic with premium aesthetics, offering an immersive web-based cosmic environment.
 
+
+![](/public/demo.png)
+
 ## ✨ Features
 
 - **Realistic Orbital Motion**: Calculates and visualizes planetary orbits with scaled fidelity.

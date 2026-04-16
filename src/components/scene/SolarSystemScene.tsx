@@ -1,11 +1,11 @@
 import React, { Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { Stars, Sparkles } from '@react-three/drei';
 import * as THREE from 'three';
 
 import CameraController from './CameraController';
 import SunMesh from './SunMesh';
 import PlanetMesh from './PlanetMesh';
+import SpaceBackground from './SpaceBackground';
 import { solarSystemData } from '../../data/solarSystemData';
 
 const SolarSystemScene: React.FC = () => {
@@ -16,11 +16,8 @@ const SolarSystemScene: React.FC = () => {
     >
       <color attach="background" args={['#010103']} />
       
-      {/* Background environment */}
-      <Stars radius={400} depth={50} count={12000} factor={5} saturation={0} fade speed={1} />
-      
-      {/* Cosmic Dust / Ambient Space Particles for Parallax depth */}
-      <Sparkles count={4000} scale={1500} size={1.5} speed={0.2} opacity={0.15} color="#c8d6e5" />
+      {/* Procedural Deep Space Nebula Skybox */}
+      <SpaceBackground />
 
       <Suspense fallback={null}>
         <CameraController />
