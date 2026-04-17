@@ -20,7 +20,20 @@ const nebulaFragmentShader = `
 varying vec3 vWorldPosition;
 uniform float time;
 
-// Hash functions
+// ---- Hash-based pseudo-random (fast, no noise artifacts) ----
+float hash(vec3 p) {
+  p = fract(p * vec3(443.8975, 397.2973, 491.1871));
+  p += dot(p, p.yxz + 19.19);
+  return fract((p.x + p.y) * p.z);
+}
+
+float hash2(vec2 p) {
+  vec3 p3 = fract(vec3(p.xyx) * vec3(443.8975, 397.2973, 491.1871));
+  p3 += dot(p3, p3.yzx + 19.19);
+  return fract((p3.x + p3.y) * p3.z);
+}
+
+// ---- Simplex noise (kept for nebula wisps) ----
 vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
 vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
 vec4 permute(vec4 x) { return mod289(((x * 34.0) + 1.0) * x); }
@@ -69,7 +82,6 @@ float snoise(vec3 v) {
   return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
 }
 
-// Fractal Brownian Motion
 float fbm(vec3 p, int octaves) {
   float value = 0.0;
   float amplitude = 0.5;
@@ -83,72 +95,147 @@ float fbm(vec3 p, int octaves) {
   return value;
 }
 
+// ============================================================
+// STAR LAYER — grid-cell based, produces sharp point stars
+// Each cell may or may not contain a star. Stars are placed at
+// a random sub-pixel position within the cell, giving a natural
+// distribution. The brightness falls off sharply from the center
+// to produce pinpoint lights, not blobs.
+// ============================================================
+float starLayer(vec3 dir, float scale, float density, float seed) {
+  // Project direction onto a 2D grid via spherical coords
+  float theta = atan(dir.z, dir.x);           // -PI to PI
+  float phi   = asin(clamp(dir.y, -1.0, 1.0)); // -PI/2 to PI/2
+  vec2 uv = vec2(theta, phi) * scale;
+
+  vec2 cell = floor(uv);
+  vec2 frac_uv = fract(uv);
+
+  float brightness = 0.0;
+
+  // Check 3x3 neighborhood to handle stars near cell edges
+  for (int x = -1; x <= 1; x++) {
+    for (int y = -1; y <= 1; y++) {
+      vec2 neighbor = vec2(float(x), float(y));
+      vec2 cellId = cell + neighbor;
+
+      // Random position within cell
+      float r1 = hash2(cellId * 1.13 + seed);
+      float r2 = hash2(cellId * 2.37 + seed + 71.0);
+      vec2 starPos = neighbor + vec2(r1, r2) - frac_uv;
+
+      // Distance from fragment to star center
+      float dist = length(starPos);
+
+      // Only some cells have stars (controlled by density)
+      float hasStar = step(1.0 - density, hash2(cellId * 3.91 + seed + 137.0));
+
+      // Random magnitude per star
+      float mag = hash2(cellId * 5.17 + seed + 293.0);
+      mag = 0.3 + 0.7 * mag * mag; // bias toward dimmer stars
+
+      // Sharp falloff — real stars are pinpoints
+      float glow = hasStar * mag * smoothstep(0.06, 0.0, dist);
+
+      brightness += glow;
+    }
+  }
+  return brightness;
+}
+
+// Spectral color from temperature index (0=cool red/orange, 1=hot blue/white)
+vec3 starColor(float temp) {
+  vec3 cool = vec3(1.0, 0.7, 0.4);   // K/M type — warm orange
+  vec3 white = vec3(1.0, 0.98, 0.95); // G type — sun-like
+  vec3 hot  = vec3(0.7, 0.8, 1.0);    // O/B type — blue-white
+
+  vec3 col = mix(cool, white, smoothstep(0.0, 0.45, temp));
+  col = mix(col, hot, smoothstep(0.45, 1.0, temp));
+  return col;
+}
+
 void main() {
-  // Normalize direction from center
   vec3 dir = normalize(vWorldPosition);
-  
-  // Use direction as noise coordinate (very slow drift for gentle animation)
-  vec3 noisePos = dir * 2.0 + vec3(time * 0.001, -time * 0.0005, time * 0.0008);
-  
-  // === NEBULA CLOUDS ===
-  // Multiple layers of FBM at different scales for depth
-  float nebula1 = fbm(noisePos * 1.0, 6);             // Large-scale structure
-  float nebula2 = fbm(noisePos * 2.5 + 5.0, 5);       // Medium detail
-  float nebula3 = fbm(noisePos * 4.0 + 10.0, 4);      // Fine wisps
-  
-  // Shape the clouds: threshold and smooth them
-  float cloud1 = smoothstep(-0.1, 0.6, nebula1) * 0.6;
-  float cloud2 = smoothstep(0.0, 0.5, nebula2) * 0.4;
-  float cloud3 = smoothstep(0.1, 0.5, nebula3) * 0.3;
-  
-  // === NEBULA COLORING ===
-  // Deep space palette: subtle purples and blues
-  vec3 deepBlue      = vec3(0.02, 0.03, 0.14);
-  vec3 cosmicPurple  = vec3(0.10, 0.025, 0.18);
-  vec3 nebulaBlue    = vec3(0.05, 0.09, 0.30);
-  vec3 nebulaPink    = vec3(0.15, 0.04, 0.12);
-  vec3 dustyGold     = vec3(0.08, 0.06, 0.02);
-  vec3 voidBlack     = vec3(0.005, 0.006, 0.018);
-  
-  // Layer 1: Large purple/blue gas clouds
-  vec3 color1 = mix(cosmicPurple, nebulaBlue, smoothstep(-0.2, 0.3, nebula1));
-  
-  // Layer 2: Pink/magenta emission nebula + hints of gold
-  vec3 color2 = mix(nebulaPink, dustyGold, smoothstep(-0.1, 0.4, nebula2));
-  
-  // Layer 3: Blue wisps
-  vec3 color3 = mix(deepBlue, nebulaBlue, smoothstep(-0.1, 0.4, nebula3));
-  
-  // Combine clouds
-  vec3 nebulaColor = voidBlack;
-  nebulaColor += color1 * cloud1 * 0.9;
-  nebulaColor += color2 * cloud2 * 0.7;
-  nebulaColor += color3 * cloud3 * 0.6;
-  
-  // === STAR FIELD (tiny bright points) ===
-  // Use a high-frequency noise to place individual stars
-  float starNoise = snoise(dir * 80.0);
-  float stars = smoothstep(0.88, 0.92, starNoise) * 0.8;
-  
-  // Some rare brighter stars
-  float brightStarNoise = snoise(dir * 40.0 + 100.0);
-  float brightStars = smoothstep(0.92, 0.95, brightStarNoise) * 1.2;
-  
-  // Tint bright stars slightly warm/cool randomly
-  float starTint = snoise(dir * 20.0 + 50.0);
-  vec3 starColor = mix(vec3(0.8, 0.85, 1.0), vec3(1.0, 0.9, 0.7), smoothstep(-0.5, 0.5, starTint));
-  
-  // Add stars on top of nebula
-  nebulaColor += starColor * (stars + brightStars);
-  
-  // === GALACTIC PLANE HINT ===
-  // Subtle bright band across one axis to suggest a galactic plane
-  float galacticBand = exp(-8.0 * dir.y * dir.y); // Gaussian around y=0
-  float galacticNoise = fbm(dir * 3.0 + vec3(50.0), 4);
-  vec3 galacticColor = mix(deepBlue, nebulaBlue, 0.5) * 0.15;
-  nebulaColor += galacticColor * galacticBand * smoothstep(-0.2, 0.3, galacticNoise);
-  
-  gl_FragColor = vec4(nebulaColor, 1.0);
+
+  // ===== DEEP SPACE BASE =====
+  // Nearly pure black with a hint of very deep blue
+  vec3 spaceColor = vec3(0.003, 0.004, 0.012);
+
+  // ===== STAR FIELD =====
+  // Three layers at different scales for depth variation
+
+  // Layer 1: Sparse bright stars (few, prominent)
+  float s1 = starLayer(dir, 50.0, 0.12, 0.0);
+  float temp1 = hash(dir * 50.0 + 1.0);
+  // Subtle twinkle
+  float twinkle1 = 0.85 + 0.15 * sin(time * (1.5 + temp1 * 2.0) + temp1 * 40.0);
+  spaceColor += starColor(temp1) * s1 * 1.2 * twinkle1;
+
+  // Layer 2: Medium density stars
+  float s2 = starLayer(dir, 100.0, 0.08, 43.0);
+  float temp2 = hash(dir * 100.0 + 43.0);
+  spaceColor += starColor(temp2) * s2 * 0.5;
+
+  // Layer 3: Dense dim stars (fine dust of faint stars)
+  float s3 = starLayer(dir, 200.0, 0.06, 97.0);
+  spaceColor += vec3(0.9, 0.92, 1.0) * s3 * 0.2;
+
+  // ===== MILKY WAY BAND =====
+  float galacticLat = abs(dir.y);
+  float milkyWayWide = exp(-6.0 * galacticLat * galacticLat);
+  float milkyWayCore = exp(-25.0 * galacticLat * galacticLat);
+
+  float mwNoise1 = fbm(dir * 2.5 + vec3(50.0, 0.0, 30.0), 5);
+  float mwNoise2 = fbm(dir * 5.0 + vec3(80.0, 0.0, 60.0), 4);
+  float mwNoise3 = fbm(dir * 8.0 + vec3(15.0, 5.0, 25.0), 3);
+
+  // Outer diffuse glow
+  float mwGlowOuter = milkyWayWide * smoothstep(-0.1, 0.45, mwNoise1) * 0.06;
+  vec3 mwColorOuter = mix(
+    vec3(0.04, 0.04, 0.06),
+    vec3(0.05, 0.04, 0.03),
+    smoothstep(-0.2, 0.3, mwNoise2)
+  );
+  spaceColor += mwColorOuter * mwGlowOuter;
+
+  // Bright core
+  float mwGlowCore = milkyWayCore * smoothstep(-0.1, 0.35, mwNoise1) * 0.08;
+  vec3 mwColorCore = mix(
+    vec3(0.06, 0.05, 0.08),
+    vec3(0.08, 0.07, 0.05),
+    smoothstep(-0.1, 0.4, mwNoise3)
+  );
+  spaceColor += mwColorCore * mwGlowCore;
+
+  // Dust lanes
+  float dustLane = fbm(dir * 4.0 + vec3(20.0, 10.0, 40.0), 4);
+  float dustMask = milkyWayWide * smoothstep(0.0, 0.3, dustLane) * 0.03;
+  spaceColor = max(spaceColor - dustMask, vec3(0.0));
+
+  // Extra stars along Milky Way
+  float mwStars = starLayer(dir, 150.0, 0.15, 211.0);
+  spaceColor += vec3(0.85, 0.88, 1.0) * mwStars * milkyWayWide * 0.35;
+
+  // ===== NEBULA WISPS =====
+  // Small isolated patches only — high threshold to avoid fog
+  vec3 nebulaPos = dir * 1.8 + vec3(time * 0.0005, -time * 0.0003, time * 0.0004);
+  float neb1 = fbm(nebulaPos * 1.2, 5);
+  float neb2 = fbm(nebulaPos * 2.0 + 7.0, 4);
+
+  // Only the brightest peaks show — most of the sky stays clean
+  float nebulaMask = smoothstep(0.3, 0.6, neb1);
+  vec3 nebulaColor = mix(
+    vec3(0.04, 0.015, 0.06),
+    vec3(0.015, 0.04, 0.08),
+    smoothstep(-0.1, 0.3, neb2)
+  );
+  spaceColor += nebulaColor * nebulaMask * 0.2;
+
+  // Faint warm emission in nebula peaks
+  float emission = smoothstep(0.45, 0.65, neb2) * nebulaMask;
+  spaceColor += vec3(0.06, 0.015, 0.02) * emission * 0.15;
+
+  gl_FragColor = vec4(spaceColor, 1.0);
 }
 `;
 

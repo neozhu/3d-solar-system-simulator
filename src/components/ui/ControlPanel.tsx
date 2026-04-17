@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, Orbit, Type, Maximize } from 'lucide-react';
+import { Play, Pause, Orbit, Type, Maximize, Film } from 'lucide-react';
 import { useSimulationStore } from '../../store/useSimulationStore';
 
 const ControlPanel: React.FC = () => {
@@ -12,7 +12,10 @@ const ControlPanel: React.FC = () => {
     toggleOrbits,
     showLabels,
     toggleLabels,
-    setSelectedPlanetId
+    setSelectedPlanetId,
+    isTourActive,
+    startTour,
+    stopTour
   } = useSimulationStore();
 
   return (
@@ -20,7 +23,7 @@ const ControlPanel: React.FC = () => {
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-bold tracking-wider text-white/80 uppercase">Controls</h3>
         <button 
-          onClick={() => setSelectedPlanetId(null)}
+          onClick={() => { if (isTourActive) stopTour(); setSelectedPlanetId(null); }}
           className="p-1.5 hover:bg-white/10 rounded-lg transition-colors group"
           title="Reset Camera View"
         >
@@ -63,13 +66,19 @@ const ControlPanel: React.FC = () => {
           onClick={toggleOrbits}
           className={`flex-1 flex gap-2 items-center justify-center p-2 rounded-xl text-xs font-semibold transition-colors ${showOrbits ? 'bg-white/10 text-white' : 'hover:bg-white/5 text-white/40'}`}
         >
-          <Orbit size={14} /> Toggle Orbits
+          <Orbit size={14} /> Orbits
         </button>
         <button 
           onClick={toggleLabels}
           className={`flex-1 flex gap-2 items-center justify-center p-2 rounded-xl text-xs font-semibold transition-colors ${showLabels ? 'bg-white/10 text-white' : 'hover:bg-white/5 text-white/40'}`}
         >
-          <Type size={14} /> Toggle Labels
+          <Type size={14} /> Labels
+        </button>
+        <button 
+          onClick={() => isTourActive ? stopTour() : startTour()}
+          className={`flex-1 flex gap-2 items-center justify-center p-2 rounded-xl text-xs font-semibold transition-colors ${isTourActive ? 'bg-amber-500/20 text-amber-300 ring-1 ring-amber-500/30' : 'hover:bg-white/5 text-white/40'}`}
+        >
+          <Film size={14} /> Tour
         </button>
       </div>
     </div>

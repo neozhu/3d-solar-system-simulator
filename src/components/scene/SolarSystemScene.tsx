@@ -1,8 +1,10 @@
 import React, { Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
 import * as THREE from 'three';
+import { EffectComposer, Bloom, ChromaticAberration, Noise, Vignette } from '@react-three/postprocessing';
+import { BlendFunction } from 'postprocessing';
 
-import CameraController from './CameraController';
+import CameraDirector from './CameraDirector';
 import SunMesh from './SunMesh';
 import PlanetMesh from './PlanetMesh';
 import SpaceBackground from './SpaceBackground';
@@ -11,7 +13,7 @@ import { solarSystemData } from '../../data/solarSystemData';
 const SolarSystemScene: React.FC = () => {
   return (
     <Canvas 
-      camera={{ fov: 45, far: 8000, position: [0, 150, 300] }}
+      camera={{ fov: 60, far: 8000, position: [0, 400, 800] }}
       gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping }}
     >
       <color attach="background" args={['#010103']} />
@@ -20,7 +22,7 @@ const SolarSystemScene: React.FC = () => {
       <SpaceBackground />
 
       <Suspense fallback={null}>
-        <CameraController />
+        <CameraDirector />
         
         {/* Render celestial bodies */}
         {solarSystemData.map(planet => {
@@ -30,29 +32,25 @@ const SolarSystemScene: React.FC = () => {
           return <PlanetMesh key={planet.id} data={planet} />;
         })}
 
-        {/* Cinematic Post Processing (Temporarily Disabled for Debugging) */}
-        {/* <EffectComposer disableNormalPass multisampling={4}>
+        {/* Cinematic Post Processing — subtle, realistic */}
+        <EffectComposer enableNormalPass={false} multisampling={4}>
           <Bloom 
-            luminanceThreshold={0.2} 
+            luminanceThreshold={0.3} 
             luminanceSmoothing={0.9} 
-            intensity={1.2} 
+            intensity={0.8} 
             mipmapBlur
-          />
-          <ChromaticAberration 
-            blendFunction={BlendFunction.NORMAL} 
-            offset={new THREE.Vector2(0.0005, 0.0005)} 
           />
           <Noise 
             premultiply 
             blendFunction={BlendFunction.SCREEN} 
-            opacity={0.3} 
+            opacity={0.08} 
           />
           <Vignette 
-            offset={0.4} 
-            darkness={0.6} 
+            offset={0.35} 
+            darkness={0.5} 
             blendFunction={BlendFunction.NORMAL} 
           />
-        </EffectComposer> */}
+        </EffectComposer>
       </Suspense>
     </Canvas>
   );

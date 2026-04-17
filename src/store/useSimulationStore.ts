@@ -16,6 +16,11 @@ interface SimulationState {
   // Real world time elapsed in simulation days
   globalTimeElapsedDays: number;
   incrementTime: (deltaTimeSeconds: number) => void;
+
+  // Camera tour state
+  isTourActive: boolean;
+  startTour: () => void;
+  stopTour: () => void;
 }
 
 export const useSimulationStore = create<SimulationState>((set) => ({
@@ -38,5 +43,10 @@ export const useSimulationStore = create<SimulationState>((set) => ({
     return {
       globalTimeElapsedDays: state.globalTimeElapsedDays + (deltaTime * state.timeMultiplier)
     };
-  })
+  }),
+
+  // Camera tour
+  isTourActive: false,
+  startTour: () => set({ isTourActive: true }),
+  stopTour: () => set({ isTourActive: false }),
 }));
