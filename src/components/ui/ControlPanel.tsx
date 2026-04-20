@@ -35,10 +35,17 @@ const ControlPanel: React.FC = () => {
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold text-white/60">Time Speed</span>
           <span className="text-xs font-mono bg-white/10 px-2 py-0.5 rounded text-white/90">
-             {timeMultiplier.toFixed(1)} Days/s
+             {timeMultiplier <= 0.0001 ? 'Real Time' : `${timeMultiplier.toFixed(1)} Days/s`}
           </span>
         </div>
         
+        <div className="flex gap-1 justify-between mb-1">
+          <button onClick={() => setTimeMultiplier(1/86400)} className="flex-1 text-[10px] py-1 bg-white/5 hover:bg-white/20 rounded transition-colors text-white/60 hover:text-white">Real Time</button>
+          <button onClick={() => setTimeMultiplier(1)} className="flex-1 text-[10px] py-1 bg-white/5 hover:bg-white/20 rounded transition-colors text-white/60 hover:text-white">1 Day/s</button>
+          <button onClick={() => setTimeMultiplier(30)} className="flex-1 text-[10px] py-1 bg-white/5 hover:bg-white/20 rounded transition-colors text-white/60 hover:text-white">1 Mo/s</button>
+          <button onClick={() => setTimeMultiplier(100)} className="flex-1 text-[10px] py-1 bg-white/5 hover:bg-white/20 rounded transition-colors text-white/60 hover:text-white">Max</button>
+        </div>
+
         <div className="flex items-center gap-3">
           <button 
             onClick={togglePause}
@@ -52,7 +59,7 @@ const ControlPanel: React.FC = () => {
             min="0" 
             max="100" 
             step="1"
-            value={timeMultiplier}
+            value={timeMultiplier <= 0.0001 ? 0 : timeMultiplier}
             onChange={(e) => setTimeMultiplier(parseFloat(e.target.value))}
             className="flex-1 h-2 bg-white/20 rounded-full appearance-none cursor-pointer accent-white"
           />

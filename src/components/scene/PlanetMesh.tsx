@@ -204,7 +204,8 @@ const PlanetMesh: React.FC<PlanetMeshProps> = ({ data }) => {
             {data.hasRings && (
               <>
                 <mesh rotation={[Math.PI / 2, 0, 0]}>
-                  <ringGeometry args={[scaledRadius * 1.2, scaledRadius * 2.2, 128]} />
+                  {/* Slightly increased ring size for better visibility */}
+                  <ringGeometry args={[scaledRadius * 1.25, scaledRadius * 2.45, 128]} />
                   {useLayeredRings ? (
                     <meshBasicMaterial
                       color="#ffffff"
@@ -213,7 +214,7 @@ const PlanetMesh: React.FC<PlanetMeshProps> = ({ data }) => {
                       opacity={1}
                       side={THREE.DoubleSide}
                       alphaMap={ringMap || null}
-                      alphaTest={0.02}
+                      alphaTest={0.01}
                       depthWrite={false}
                     />
                   ) : (
@@ -231,15 +232,16 @@ const PlanetMesh: React.FC<PlanetMeshProps> = ({ data }) => {
 
                 {useLayeredRings && (
                   <mesh rotation={[Math.PI / 2, 0, 0]}>
-                    <ringGeometry args={[scaledRadius * 1.2, scaledRadius * 2.2, 128]} />
-                    <meshLambertMaterial
+                    <ringGeometry args={[scaledRadius * 1.25, scaledRadius * 2.45, 128]} />
+                    {/* Replaced MultiplyBlending (which darkens against black space) with Additive to give an icy, reflective pop */}
+                    <meshBasicMaterial
                       color="#ffffff"
                       transparent
-                      opacity={0.4}
+                      opacity={0.3}
                       side={THREE.DoubleSide}
+                      map={ringMap || null}
                       alphaMap={ringMap || null}
-                      alphaTest={0.02}
-                      blending={THREE.MultiplyBlending}
+                      blending={THREE.AdditiveBlending}
                       depthWrite={false}
                       polygonOffset={true}
                       polygonOffsetFactor={-1}

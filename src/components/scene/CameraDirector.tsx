@@ -376,7 +376,8 @@ const CameraDirector: React.FC = () => {
         breathingTimeRef.current += dt;
         const bt        = breathingTimeRef.current;
         const distance  = camera.position.distanceTo(controlsRef.current.target);
-        const amplitude = distance * 0.0012;
+        // Reduced amplitude by 60% for less distracting shake
+        const amplitude = distance * 0.0004;
 
         const breathOffset = new THREE.Vector3(
           Math.sin(bt * 0.95) * amplitude,
@@ -422,7 +423,8 @@ const CameraDirector: React.FC = () => {
           const distance  = camera.position.distanceTo(
             controlsRef.current?.target || new THREE.Vector3(),
           );
-          const amplitude = distance * 0.001;
+          // Reduced amplitude for tour breathing
+          const amplitude = distance * 0.0003;
 
           camera.position.add(new THREE.Vector3(
             Math.sin(bt * 0.95) * amplitude,
@@ -473,7 +475,8 @@ const CameraDirector: React.FC = () => {
       // Even free mode gets gentle breathing
       breathingTimeRef.current += dt;
       const bt        = breathingTimeRef.current;
-      const amplitude = 0.03;
+      // Reduced free mode breathing amplitude
+      const amplitude = 0.008;
       camera.position.add(new THREE.Vector3(
         Math.sin(bt * 0.7) * amplitude,
         Math.sin(bt * 1.1) * amplitude * 0.5,

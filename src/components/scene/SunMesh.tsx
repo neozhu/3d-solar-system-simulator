@@ -217,7 +217,7 @@ const SunMesh: React.FC<SunMeshProps> = ({ data }) => {
         distance={2000} 
         decay={0.2} 
       />
-      <ambientLight intensity={0.1} />
+      <ambientLight intensity={0.02} />
       
       {showLabels && (
         <Html position={[0, -scaledRadius * 1.2, 0]} center zIndexRange={[100, 0]}>

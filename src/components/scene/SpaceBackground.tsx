@@ -181,59 +181,40 @@ void main() {
   spaceColor += vec3(0.9, 0.92, 1.0) * s3 * 0.2;
 
   // ===== MILKY WAY BAND =====
+  // 真实的银河系肉眼看是横跨夜空的暗淡发光带，几乎没有色彩（人眼在暗光下对色彩不敏感），类似淡淡的灰白色云雾，带有暗黑的尘埃带。
   float galacticLat = abs(dir.y);
-  float milkyWayWide = exp(-6.0 * galacticLat * galacticLat);
-  float milkyWayCore = exp(-25.0 * galacticLat * galacticLat);
+  float milkyWayWide = exp(-12.0 * galacticLat * galacticLat);
+  float milkyWayCore = exp(-35.0 * galacticLat * galacticLat);
 
-  float mwNoise1 = fbm(dir * 2.5 + vec3(50.0, 0.0, 30.0), 5);
-  float mwNoise2 = fbm(dir * 5.0 + vec3(80.0, 0.0, 60.0), 4);
-  float mwNoise3 = fbm(dir * 8.0 + vec3(15.0, 5.0, 25.0), 3);
+  float mwNoise1 = fbm(dir * 3.0 + vec3(50.0, 0.0, 30.0), 5);
+  float mwNoise2 = fbm(dir * 6.0 + vec3(80.0, 0.0, 60.0), 4);
+  float mwNoise3 = fbm(dir * 9.0 + vec3(15.0, 5.0, 25.0), 3);
 
-  // Outer diffuse glow
-  float mwGlowOuter = milkyWayWide * smoothstep(-0.1, 0.45, mwNoise1) * 0.06;
-  vec3 mwColorOuter = mix(
-    vec3(0.04, 0.04, 0.06),
-    vec3(0.05, 0.04, 0.03),
-    smoothstep(-0.2, 0.3, mwNoise2)
-  );
+  // 银晕（非常微弱的偏灰白发光）
+  float mwGlowOuter = milkyWayWide * smoothstep(0.0, 0.5, mwNoise1) * 0.05;
+  vec3 mwColorOuter = vec3(0.05, 0.05, 0.055); // 极低饱和度的微弱银灰/带点极弱的蓝
   spaceColor += mwColorOuter * mwGlowOuter;
 
-  // Bright core
-  float mwGlowCore = milkyWayCore * smoothstep(-0.1, 0.35, mwNoise1) * 0.08;
-  vec3 mwColorCore = mix(
-    vec3(0.06, 0.05, 0.08),
-    vec3(0.08, 0.07, 0.05),
-    smoothstep(-0.1, 0.4, mwNoise3)
-  );
+  // 银河中心核球区（微弱的偏黄/灰白色）
+  float mwGlowCore = milkyWayCore * smoothstep(0.0, 0.4, mwNoise1) * 0.08;
+  vec3 mwColorCore = vec3(0.09, 0.08, 0.07); // 微弱偏暖的星光混合色
   spaceColor += mwColorCore * mwGlowCore;
 
-  // Dust lanes
-  float dustLane = fbm(dir * 4.0 + vec3(20.0, 10.0, 40.0), 4);
-  float dustMask = milkyWayWide * smoothstep(0.0, 0.3, dustLane) * 0.03;
+  // 明显的黑色尘埃带 (大裂缝 - Great Rift)
+  float dustLane = fbm(dir * 3.5 + vec3(20.0, 10.0, 40.0), 5);
+  float dustMask = milkyWayWide * smoothstep(0.2, 0.6, dustLane) * 0.04;
   spaceColor = max(spaceColor - dustMask, vec3(0.0));
 
-  // Extra stars along Milky Way
-  float mwStars = starLayer(dir, 150.0, 0.15, 211.0);
-  spaceColor += vec3(0.85, 0.88, 1.0) * mwStars * milkyWayWide * 0.35;
+  // 银河密集的背景恒星 (由于太密集，往往融合在一起，但也会有部分独立可见)
+  float mwStars = starLayer(dir, 180.0, 0.2, 211.0);
+  spaceColor += vec3(0.9, 0.95, 1.0) * mwStars * milkyWayWide * 0.4;
 
-  // ===== NEBULA WISPS =====
-  // Small isolated patches only — high threshold to avoid fog
-  vec3 nebulaPos = dir * 1.8 + vec3(time * 0.0005, -time * 0.0003, time * 0.0004);
-  float neb1 = fbm(nebulaPos * 1.2, 5);
-  float neb2 = fbm(nebulaPos * 2.0 + 7.0, 4);
-
-  // Only the brightest peaks show — most of the sky stays clean
-  float nebulaMask = smoothstep(0.3, 0.6, neb1);
-  vec3 nebulaColor = mix(
-    vec3(0.04, 0.015, 0.06),
-    vec3(0.015, 0.04, 0.08),
-    smoothstep(-0.1, 0.3, neb2)
-  );
-  spaceColor += nebulaColor * nebulaMask * 0.2;
-
-  // Faint warm emission in nebula peaks
-  float emission = smoothstep(0.45, 0.65, neb2) * nebulaMask;
-  spaceColor += vec3(0.06, 0.015, 0.02) * emission * 0.15;
+  // ===== NEBULA WISPS (已移除) =====
+  // 真实的宇宙背景中，除了银河及其非常微弱的附属结构，
+  // 我们肉眼（乃至常规望远镜）是看不到前一版中那样巨大的绚丽彩色星云的。
+  // 即便是猎户座大星云，在天文望远镜里也就是一团微弱的灰白色云气。
+  // 彩色星云大多是哈勃/韦伯望远镜长时间曝光并使用“窄带滤光片”人工上色的结果。
+  // 出于物理写实考虑，这里保持纯净的星空。
 
   gl_FragColor = vec4(spaceColor, 1.0);
 }
