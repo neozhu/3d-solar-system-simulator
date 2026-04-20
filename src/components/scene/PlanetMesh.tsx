@@ -6,6 +6,7 @@ import { PlanetData } from '../../data/solarSystemData';
 import { useSimulationStore } from '../../store/useSimulationStore';
 import { getScaledRadius, getScaledDistance, calculateOrbitalAngle, calculateRotationAngle } from '../../utils/scaling';
 import Atmosphere from './Atmosphere';
+import SatelliteMesh from './SatelliteMesh';
 
 interface PlanetMeshProps {
   data: PlanetData;
@@ -252,6 +253,11 @@ const PlanetMesh: React.FC<PlanetMeshProps> = ({ data }) => {
               </>
             )}
           </group>
+
+          {/* Satellites */}
+          {data.satellites && data.satellites.map(sat => (
+            <SatelliteMesh key={sat.id} data={sat} />
+          ))}
 
           {/* HTML Label */}
           {showLabels && (

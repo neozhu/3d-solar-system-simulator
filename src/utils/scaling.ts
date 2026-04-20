@@ -36,6 +36,13 @@ export const getScaledDistance = (distanceAU: number): number => {
   return MIN_DISTANCE_OFFSET + (compressedAU * BASE_DISTANCE_AU);
 };
 
+export const getScaledSatelliteDistance = (distanceAU: number): number => {
+  if (distanceAU === 0) return 0;
+  // Reduce satellite distance so the orbit doesn't cross into neighboring planets' paths.
+  // 0.1 AU -> 2.0 units away from center (Earth radius is ~1 unit)
+  return distanceAU * 20; 
+};
+
 // Returns angle in radians for orbital position
 export const calculateOrbitalAngle = (periodDays: number, timeElapsedDays: number): number => {
   if (periodDays === 0) return 0;

@@ -16,6 +16,7 @@ export interface PlanetData {
   cloudsMapUrl?: string;     // Cloud layer map
   textureColor?: string;     // Optional tint for the color map
   hasAtmosphere?: boolean;
+  satellites?: PlanetData[]; // Moons orbiting the planet
 }
 
 const textureBaseUrl = `${import.meta.env.BASE_URL}textures`;
@@ -26,6 +27,7 @@ const textureMap = {
   venus: `${textureBaseUrl}/venus.jpg`,
   earth: `${textureBaseUrl}/earth.jpg`,
   earthClouds: `${textureBaseUrl}/earth-clouds.jpg`,
+  moon: `${textureBaseUrl}/moon.png`,
   mars: `${textureBaseUrl}/mars.jpg`,
   jupiter: `${textureBaseUrl}/jupiter.jpg`,
   saturn: `${textureBaseUrl}/saturn.jpg`,
@@ -88,6 +90,20 @@ export const solarSystemData: PlanetData[] = [
     textureUrl: textureMap.earth,
     cloudsMapUrl: textureMap.earthClouds,
     hasAtmosphere: true,
+    satellites: [
+      {
+        id: "moon",
+        name: "Moon",
+        radiusKm: 1737.4,
+        distanceFromSunAU: 0.1,
+        orbitalPeriodDays: 27.3,
+        rotationPeriodDays: 27.3,
+        axialTiltDegrees: 1.54,
+        color: "#d1d5db",
+        textureUrl: textureMap.moon,
+        description: "Earth's only natural satellite."
+      }
+    ],
     description: "Our home planet is the third planet from the Sun, and the only place we know of so far that's inhabited by living things."
   },
   {
