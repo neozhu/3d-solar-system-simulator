@@ -17,6 +17,7 @@ export interface PlanetData {
   textureColor?: string;     // Optional tint for the color map
   hasAtmosphere?: boolean;
   satellites?: PlanetData[]; // Moons orbiting the planet
+  isTidallyLocked?: boolean;
 }
 
 const textureBaseUrl = `${import.meta.env.BASE_URL}textures`;
