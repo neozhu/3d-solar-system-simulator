@@ -11,6 +11,91 @@ interface SunMeshProps {
 }
 
 // ============================================================
+// Dynamic Photosphere Surface Shader
+// Adds animated solar granulation, magnetic convective turbulence,
+// and glowing limb darkening over the base solar map.
+// ============================================================
+const sunSurfaceVertexShader = `
+varying vec2 vUv;
+varying vec3 vNormal;
+varying vec3 vPosition;
+
+void main() {
+  vUv = uv;
+  vNormal = normalize(normalMatrix * normal);
+  vPosition = position;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}
+`;
+
+const sunSurfaceFragmentShader = `
+uniform sampler2D uTexture;
+uniform float uTime;
+uniform bool uHasTexture;
+varying vec2 vUv;
+varying vec3 vNormal;
+varying vec3 vPosition;
+
+// Simple fast 2D hash & noise
+float hash(vec2 p) {
+  return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+}
+
+float noise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  f = f * f * (3.0 - 2.0 * f);
+  float a = hash(i);
+  float b = hash(i + vec2(1.0, 0.0));
+  float c = hash(i + vec2(0.0, 1.0));
+  float d = hash(i + vec2(1.0, 1.0));
+  return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+}
+
+float fbm(vec2 p) {
+  float v = 0.0;
+  float a = 0.5;
+  for (int i = 0; i < 4; i++) {
+    v += a * noise(p);
+    p *= 2.1;
+    a *= 0.5;
+  }
+  return v;
+}
+
+void main() {
+  // Convective granulation flow
+  vec2 flowUv1 = vUv * 25.0 + vec2(uTime * 0.02, uTime * 0.015);
+  vec2 flowUv2 = vUv * 35.0 - vec2(uTime * 0.015, -uTime * 0.02);
+  
+  float gran1 = fbm(flowUv1);
+  float gran2 = fbm(flowUv2);
+  float granulation = mix(gran1, gran2, 0.5);
+
+  vec4 baseTex = uHasTexture ? texture2D(uTexture, vUv) : vec4(1.0, 0.8, 0.2, 1.0);
+
+  // Solar Limb Darkening: Center is hotter/whiter, edge has orange/red rim
+  float limb = dot(vNormal, vec3(0.0, 0.0, 1.0));
+  limb = clamp(limb, 0.0, 1.0);
+  
+  vec3 hotColor = vec3(1.0, 0.96, 0.85); // Incandescent core
+  vec3 midColor = vec3(1.0, 0.72, 0.15); // Solar orange
+  vec3 edgeColor = vec3(0.9, 0.35, 0.05); // Deep chromosphere red
+  
+  vec3 surfaceColor = mix(midColor, hotColor, granulation * 0.5 + 0.5);
+  surfaceColor = mix(edgeColor, surfaceColor, pow(limb, 0.45));
+  
+  // Modulate with base texture if available
+  if (uHasTexture) {
+    surfaceColor = mix(baseTex.rgb * 1.2, surfaceColor, 0.4);
+  }
+
+  // Boost emissive punch for post-processing bloom
+  gl_FragColor = vec4(surfaceColor * 1.35, 1.0);
+}
+`;
+
+// ============================================================
 // Corona + CME Billboard Shader
 // ============================================================
 const coronaVertexShader = `
@@ -54,79 +139,47 @@ void main() {
   float d = length(uv);
   float angle = atan(uv.y, uv.x);
   
-  // Sun surface at d = 0.2 (radius / half-plane-size = R / (R*2.5))
   float surfaceD = 0.2;
   
-  // ========================================
-  // A. BASE CORONA (smooth glow just outside surface)
-  // ========================================
+  // Base corona glow
   float wobble = sin(angle * 5.0 - time * 2.0) * 0.005 + sin(angle * 8.0 + time * 1.5) * 0.003;
-  float coronaBase = smoothstep(0.34, surfaceD, d + wobble) * smoothstep(surfaceD - 0.02, surfaceD, d);
+  float coronaBase = smoothstep(0.35, surfaceD, d + wobble) * smoothstep(surfaceD - 0.02, surfaceD, d);
   
-  // ========================================
-  // B. CORONAL MASS EJECTIONS (CME) — large blob eruptions
-  // ========================================
-  // CME #1
+  // CME eruptions
   float cmeAngle1 = 1.2 + sin(time * 0.05) * 0.5;
   float cmePhase1 = fract(time * 0.08);
   float cmeRadius1 = surfaceD + cmePhase1 * 0.3;
   float cmeSize1 = 0.04 + cmePhase1 * 0.06;
   vec2 cmeCenter1 = vec2(cos(cmeAngle1), sin(cmeAngle1)) * cmeRadius1;
-  float cmeDist1 = length(uv - cmeCenter1);
-  float cmeBlob1 = smoothstep(cmeSize1, cmeSize1 * 0.3, cmeDist1) * (1.0 - cmePhase1);
+  float cmeBlob1 = smoothstep(cmeSize1, cmeSize1 * 0.3, length(uv - cmeCenter1)) * (1.0 - cmePhase1);
 
-  // CME #2 (offset timing)
   float cmeAngle2 = -0.8 + cos(time * 0.04) * 0.6;
   float cmePhase2 = fract(time * 0.08 + 0.5);
   float cmeRadius2 = surfaceD + cmePhase2 * 0.25;
   float cmeSize2 = 0.03 + cmePhase2 * 0.05;
   vec2 cmeCenter2 = vec2(cos(cmeAngle2), sin(cmeAngle2)) * cmeRadius2;
-  float cmeDist2 = length(uv - cmeCenter2);
-  float cmeBlob2 = smoothstep(cmeSize2, cmeSize2 * 0.3, cmeDist2) * (1.0 - cmePhase2);
+  float cmeBlob2 = smoothstep(cmeSize2, cmeSize2 * 0.3, length(uv - cmeCenter2)) * (1.0 - cmePhase2);
 
-  // CME #3 (different frequency)
-  float cmeAngle3 = 2.8 + sin(time * 0.03 + 2.0) * 0.4;
-  float cmePhase3 = fract(time * 0.06 + 0.33);
-  float cmeRadius3 = surfaceD + cmePhase3 * 0.35;
-  float cmeSize3 = 0.035 + cmePhase3 * 0.055;
-  vec2 cmeCenter3 = vec2(cos(cmeAngle3), sin(cmeAngle3)) * cmeRadius3;
-  float cmeDist3 = length(uv - cmeCenter3);
-  float cmeBlob3 = smoothstep(cmeSize3, cmeSize3 * 0.3, cmeDist3) * (1.0 - cmePhase3);
+  float cmeTotal = cmeBlob1 + cmeBlob2;
   
-  float cmeTotal = cmeBlob1 + cmeBlob2 + cmeBlob3;
-  
-  // ========================================
-  // C. TURBULENT CORONA WISPS
-  // ========================================
+  // Wisps
   float wisps = fbm(vec2(angle * 6.0 - time * 0.2, d * 15.0 + time * 0.1)) * 0.25;
   wisps *= smoothstep(0.38, surfaceD, d) * smoothstep(surfaceD - 0.01, surfaceD + 0.02, d);
 
-  // ========================================
-  // COMBINE ALL
-  // ========================================
   float totalAlpha = clamp(coronaBase + cmeTotal + wisps, 0.0, 1.0);
-  
-  // Cut hole in center to reveal the textured sun sphere beneath
   totalAlpha *= smoothstep(surfaceD - 0.03, surfaceD, d);
   
-  // Dynamic pulse
   float pulse = sin(time * 2.5) * 0.06 + 0.94;
   
-  // Cinematic coloring by distance from surface
   vec3 coreWhite = vec3(1.0, 0.98, 0.9);
   vec3 hotYellow = vec3(1.0, 0.85, 0.3);
   vec3 flameOrange = vec3(1.0, 0.5, 0.1);
   vec3 deepRed = vec3(0.7, 0.1, 0.0);
-  vec3 darkCrimson = vec3(0.3, 0.02, 0.0);
   
-  // Layer the colors by distance
   float normD = smoothstep(surfaceD, 0.48, d);
   vec3 color = mix(coreWhite, hotYellow, smoothstep(0.0, 0.15, normD)) * pulse;
   color = mix(color, flameOrange, smoothstep(0.15, 0.4, normD));
-  color = mix(color, deepRed, smoothstep(0.4, 0.7, normD));
-  color = mix(color, darkCrimson, smoothstep(0.7, 1.0, normD));
-  
-  // CME blobs are hotter (whiter)
+  color = mix(color, deepRed, smoothstep(0.4, 0.8, normD));
   color = mix(color, hotYellow * 1.3, cmeTotal * 0.6);
   
   gl_FragColor = vec4(color, totalAlpha * 0.9);
@@ -135,6 +188,7 @@ void main() {
 
 const SunMesh: React.FC<SunMeshProps> = ({ data }) => {
   const meshRef = useRef<THREE.Mesh>(null);
+  const surfaceMaterialRef = useRef<THREE.ShaderMaterial>(null);
   
   const scaledRadius = getScaledRadius(data.radiusKm, data.id);
   const showLabels = useSimulationStore(state => state.showLabels);
@@ -151,6 +205,24 @@ const SunMesh: React.FC<SunMeshProps> = ({ data }) => {
       });
     }
   }, [data.textureUrl]);
+
+  // Dynamic surface material
+  const surfaceMaterial = useMemo(() => new THREE.ShaderMaterial({
+    vertexShader: sunSurfaceVertexShader,
+    fragmentShader: sunSurfaceFragmentShader,
+    uniforms: {
+      uTexture: { value: null },
+      uHasTexture: { value: false },
+      uTime: { value: 0 },
+    },
+  }), []);
+
+  useEffect(() => {
+    if (colorMap && surfaceMaterialRef.current) {
+      surfaceMaterialRef.current.uniforms.uTexture.value = colorMap;
+      surfaceMaterialRef.current.uniforms.uHasTexture.value = true;
+    }
+  }, [colorMap]);
 
   // Corona + CME shader
   const coronaMaterial = useMemo(() => new THREE.ShaderMaterial({
@@ -170,7 +242,11 @@ const SunMesh: React.FC<SunMeshProps> = ({ data }) => {
       meshRef.current.rotation.y = calculateRotationAngle(data.rotationPeriodDays, timeElapsedDays);
       meshRef.current.rotation.z = THREE.MathUtils.degToRad(data.axialTiltDegrees);
     }
-    coronaMaterial.uniforms.time.value = state.clock.elapsedTime;
+    const elapsed = state.clock.elapsedTime;
+    coronaMaterial.uniforms.time.value = elapsed;
+    if (surfaceMaterialRef.current) {
+      surfaceMaterialRef.current.uniforms.uTime.value = elapsed;
+    }
   });
 
   const handleClick = (e: any) => {
@@ -180,6 +256,7 @@ const SunMesh: React.FC<SunMeshProps> = ({ data }) => {
 
   return (
     <group>
+      {/* Sun Surface Mesh with dynamic convective granulation */}
       <mesh 
         ref={meshRef} 
         onClick={handleClick}
@@ -188,11 +265,7 @@ const SunMesh: React.FC<SunMeshProps> = ({ data }) => {
         name={data.id}
       >
         <sphereGeometry args={[scaledRadius, 64, 64]} />
-        <meshBasicMaterial 
-          key={colorMap ? 'textured' : 'fallback'}
-          color={colorMap ? '#ffffff' : data.color}
-          map={colorMap || null}
-        />
+        <primitive ref={surfaceMaterialRef} object={surfaceMaterial} attach="material" />
       </mesh>
 
       {/* Corona + CME Billboard */}
@@ -210,14 +283,14 @@ const SunMesh: React.FC<SunMeshProps> = ({ data }) => {
         </mesh>
       )}
       
-      {/* Light source for the rest of the solar system */}
+      {/* Primary Light source for the solar system */}
       <pointLight 
-        color="#fff1e8" 
-        intensity={3.5} 
-        distance={2000} 
-        decay={0.2} 
+        color="#fff5ec" 
+        intensity={4.0} 
+        distance={3000} 
+        decay={0.15} 
       />
-      <ambientLight intensity={0.02} />
+      <ambientLight intensity={0.03} />
       
       {showLabels && (
         <Html position={[0, -scaledRadius * 1.2, 0]} center zIndexRange={[100, 0]}>

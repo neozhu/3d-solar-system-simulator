@@ -1,14 +1,26 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useSimulationStore } from '../../store/useSimulationStore';
-import { solarSystemData } from '../../data/solarSystemData';
+import { solarSystemData, PlanetData } from '../../data/solarSystemData';
 
 const InfoPanel: React.FC = () => {
   const selectedPlanetId = useSimulationStore(state => state.selectedPlanetId);
   const setSelectedPlanetId = useSimulationStore(state => state.setSelectedPlanetId);
   
-  const planet = solarSystemData.find(p => p.id === selectedPlanetId);
+  // Search body across all data including sub-satellites
+  const planet = useMemo<PlanetData | undefined>(() => {
+    if (!selectedPlanetId) return undefined;
+    for (const body of solarSystemData) {
+      if (body.id === selectedPlanetId) return body;
+      if (body.satellites) {
+        for (const sat of body.satellites) {
+          if (sat.id === selectedPlanetId) return sat;
+        }
+      }
+    }
+    return undefined;
+  }, [selectedPlanetId]);
 
   return (
     <AnimatePresence>
@@ -25,9 +37,16 @@ const InfoPanel: React.FC = () => {
             style={{ backgroundColor: planet.color }}
           />
           
-          <div className="p-5 flex flex-col gap-4">
+          <div className="p-5 flex flex-col gap-3.5 max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-start">
-              <h2 className="text-2xl font-bold text-white tracking-tight">{planet.name}</h2>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-2xl font-bold text-white tracking-tight">{planet.name}</h2>
+                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-white/10 text-white/70">
+                    {planet.category}
+                  </span>
+                </div>
+              </div>
               <button 
                 onClick={() => setSelectedPlanetId(null)}
                 className="p-1 hover:bg-white/10 rounded-full transition-colors text-white/60 hover:text-white"
@@ -36,18 +55,30 @@ const InfoPanel: React.FC = () => {
               </button>
             </div>
             
-            <p className="text-sm text-white/70 leading-relaxed font-medium">
+            <p className="text-xs text-white/70 leading-relaxed font-medium">
               {planet.description}
             </p>
             
-            <div className="flex flex-col gap-2 mt-2">
-              <StatRow label="Radius" value={`${planet.radiusKm.toLocaleString()} km`} />
+            <div className="flex flex-col gap-1.5 mt-1">
+              <StatRow label="Mean Radius" value={`${planet.radiusKm.toLocaleString()} km`} />
               {planet.distanceFromSunAU > 0 && (
-                <StatRow label="Distance from Sun" value={`${planet.distanceFromSunAU} AU`} />
+                <StatRow 
+                  label={planet.category === 'moon' ? "Orbital Distance" : "Semi-Major Axis"} 
+                  value={`${planet.distanceFromSunAU} AU`} 
+                />
               )}
-              <StatRow label="Orbital Period" value={`${planet.orbitalPeriodDays} days`} />
+              {planet.eccentricity !== undefined && (
+                <StatRow label="Eccentricity (e)" value={planet.eccentricity.toFixed(4)} />
+              )}
+              {planet.inclinationDeg !== undefined && (
+                <StatRow label="Orbital Inclination" value={`${planet.inclinationDeg.toFixed(2)}°`} />
+              )}
+              <StatRow label="Orbital Period" value={`${planet.orbitalPeriodDays.toLocaleString()} days`} />
               <StatRow label="Rotation Period" value={`${planet.rotationPeriodDays} days`} />
               <StatRow label="Axial Tilt" value={`${planet.axialTiltDegrees}°`} />
+              {planet.satellites && planet.satellites.length > 0 && (
+                <StatRow label="Known Moons" value={`${planet.satellites.length} recorded`} />
+              )}
             </div>
           </div>
         </motion.div>
@@ -57,9 +88,9 @@ const InfoPanel: React.FC = () => {
 };
 
 const StatRow: React.FC<{label: string, value: string}> = ({ label, value }) => (
-  <div className="flex justify-between items-center py-2 border-b border-white/5 last:border-0">
+  <div className="flex justify-between items-center py-1.5 border-b border-white/5 last:border-0">
     <span className="text-xs text-white/50">{label}</span>
-    <span className="text-sm font-semibold text-white/90 font-mono text-right">{value}</span>
+    <span className="text-xs font-semibold text-white/90 font-mono text-right">{value}</span>
   </div>
 );
 

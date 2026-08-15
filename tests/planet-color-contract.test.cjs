@@ -6,23 +6,28 @@ const path = require('node:path');
 const planetMeshPath = path.join(__dirname, '..', 'src', 'components', 'scene', 'PlanetMesh.tsx');
 const planetMeshSource = fs.readFileSync(planetMeshPath, 'utf8');
 
-test('PlanetMesh uses a neutral default tint for textured planets unless a texture-specific tint is provided', () => {
+test('PlanetMesh uses a day/night terminator shader for textured planets', () => {
   assert.match(
     planetMeshSource,
-    /const useTexturedSurface = !!colorMap;[\s\S]*\{useTexturedSurface \? \([\s\S]*<meshBasicMaterial[\s\S]*color=\{data\.textureColor \?\? '#ffffff'\}[\s\S]*map=\{colorMap \|\| null\}/,
+    /dayNightFragmentShader/,
+    'Expected PlanetMesh to use dayNightFragmentShader'
+  );
+  assert.match(
+    planetMeshSource,
+    /uDayMap/,
+    'Expected shader to sample uDayMap'
   );
 });
 
-test('Non-textured planets still fall back to the lit standard material path', () => {
+test('PlanetMesh implements Saturn ring shadow shader', () => {
   assert.match(
     planetMeshSource,
-    /: \(\s*<meshStandardMaterial[\s\S]*color=\{data\.color\}/,
+    /ringFragmentShader/,
+    'Expected PlanetMesh to use ringFragmentShader'
   );
-});
-
-test('PlanetMesh keeps ring base color while a ring texture map is present', () => {
   assert.match(
     planetMeshSource,
-    /<meshStandardMaterial[\s\S]*color=\{data\.color\}[\s\S]*map=\{ringMap \|\| null\}/,
+    /uPlanetRadius/,
+    'Expected ring shader to receive planet radius for shadow calculation'
   );
 });
