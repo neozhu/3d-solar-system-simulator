@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, Orbit, Type, Maximize, Film, Sparkles, Calendar } from 'lucide-react';
+import { Play, Pause, Orbit, Type, Maximize, Film, Sparkles, Calendar, Grid, Sliders } from 'lucide-react';
 import { useSimulationStore } from '../../store/useSimulationStore';
 
 const ControlPanel: React.FC = () => {
@@ -12,8 +12,12 @@ const ControlPanel: React.FC = () => {
     toggleOrbits,
     showLabels, 
     toggleLabels,
-    showAsteroids,
+    showAsteroids, 
     toggleAsteroids,
+    showGravityGrid,
+    toggleGravityGrid,
+    gravityGridIntensity,
+    setGravityGridIntensity,
     setSelectedPlanetId,
     isTourActive,
     startTour,
@@ -109,36 +113,64 @@ const ControlPanel: React.FC = () => {
       <div className="h-px w-full bg-white/10" />
 
       {/* Layer Visibility Toggles */}
-      <div className="grid grid-cols-4 gap-1.5">
+      <div className="grid grid-cols-5 gap-1.5">
+        <button 
+          onClick={toggleGravityGrid}
+          className={`flex flex-col gap-1 items-center justify-center p-2 rounded-xl text-[10px] font-semibold transition-colors ${showGravityGrid ? 'bg-cyan-500/20 text-cyan-300 ring-1 ring-cyan-500/40' : 'hover:bg-white/5 text-white/40'}`}
+          title="Toggle Spacetime Gravity Fabric Grid"
+        >
+          <Grid size={13} /> Gravity
+        </button>
         <button 
           onClick={toggleOrbits}
-          className={`flex flex-col gap-1 items-center justify-center p-2 rounded-xl text-[11px] font-semibold transition-colors ${showOrbits ? 'bg-white/15 text-white' : 'hover:bg-white/5 text-white/40'}`}
+          className={`flex flex-col gap-1 items-center justify-center p-2 rounded-xl text-[10px] font-semibold transition-colors ${showOrbits ? 'bg-white/15 text-white' : 'hover:bg-white/5 text-white/40'}`}
           title="Toggle Orbit Lines"
         >
           <Orbit size={13} /> Orbits
         </button>
         <button 
           onClick={toggleLabels}
-          className={`flex flex-col gap-1 items-center justify-center p-2 rounded-xl text-[11px] font-semibold transition-colors ${showLabels ? 'bg-white/15 text-white' : 'hover:bg-white/5 text-white/40'}`}
+          className={`flex flex-col gap-1 items-center justify-center p-2 rounded-xl text-[10px] font-semibold transition-colors ${showLabels ? 'bg-white/15 text-white' : 'hover:bg-white/5 text-white/40'}`}
           title="Toggle Planet Labels"
         >
           <Type size={13} /> Labels
         </button>
         <button 
           onClick={toggleAsteroids}
-          className={`flex flex-col gap-1 items-center justify-center p-2 rounded-xl text-[11px] font-semibold transition-colors ${showAsteroids ? 'bg-white/15 text-white' : 'hover:bg-white/5 text-white/40'}`}
+          className={`flex flex-col gap-1 items-center justify-center p-2 rounded-xl text-[10px] font-semibold transition-colors ${showAsteroids ? 'bg-white/15 text-white' : 'hover:bg-white/5 text-white/40'}`}
           title="Toggle Asteroid Belt"
         >
           <Sparkles size={13} /> Belts
         </button>
         <button 
           onClick={() => isTourActive ? stopTour() : startTour()}
-          className={`flex flex-col gap-1 items-center justify-center p-2 rounded-xl text-[11px] font-semibold transition-colors ${isTourActive ? 'bg-amber-500/25 text-amber-300 ring-1 ring-amber-500/40' : 'hover:bg-white/5 text-white/40'}`}
+          className={`flex flex-col gap-1 items-center justify-center p-2 rounded-xl text-[10px] font-semibold transition-colors ${isTourActive ? 'bg-amber-500/25 text-amber-300 ring-1 ring-amber-500/40' : 'hover:bg-white/5 text-white/40'}`}
           title="Start Cinematic Flythrough Tour"
         >
           <Film size={13} /> Tour
         </button>
       </div>
+
+      {/* Gravity Well Depth Slider (shows when Gravity Grid is enabled) */}
+      {showGravityGrid && (
+        <div className="flex flex-col gap-1.5 pt-1 px-1 bg-white/[0.03] rounded-xl p-2 border border-white/5">
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="flex items-center gap-1.5 text-cyan-300/80 font-medium">
+              <Sliders size={11} /> Spacetime Warp
+            </span>
+            <span className="font-mono text-white/80">{gravityGridIntensity.toFixed(1)}x</span>
+          </div>
+          <input 
+            type="range" 
+            min="0.2" 
+            max="2.5" 
+            step="0.1"
+            value={gravityGridIntensity}
+            onChange={(e) => setGravityGridIntensity(parseFloat(e.target.value))}
+            className="w-full h-1 bg-white/20 rounded-full appearance-none cursor-pointer accent-cyan-400"
+          />
+        </div>
+      )}
     </div>
   );
 };

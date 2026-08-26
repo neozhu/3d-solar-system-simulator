@@ -11,6 +11,8 @@ interface SimulationState {
   showOrbits: boolean;
   showLabels: boolean;
   showAsteroids: boolean;
+  showGravityGrid: boolean;
+  gravityGridIntensity: number;
   
   setTimeMultiplier: (multiplier: number) => void;
   togglePause: () => void;
@@ -18,6 +20,8 @@ interface SimulationState {
   toggleOrbits: () => void;
   toggleLabels: () => void;
   toggleAsteroids: () => void;
+  toggleGravityGrid: () => void;
+  setGravityGridIntensity: (intensity: number) => void;
   
   // Real world time elapsed in simulation days
   globalTimeElapsedDays: number;
@@ -41,6 +45,8 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
   showOrbits: true,
   showLabels: true,
   showAsteroids: true,
+  showGravityGrid: true,
+  gravityGridIntensity: 1.0,
   
   globalTimeElapsedDays: 0,
   
@@ -50,6 +56,8 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
   toggleOrbits: () => set((state) => ({ showOrbits: !state.showOrbits })),
   toggleLabels: () => set((state) => ({ showLabels: !state.showLabels })),
   toggleAsteroids: () => set((state) => ({ showAsteroids: !state.showAsteroids })),
+  toggleGravityGrid: () => set((state) => ({ showGravityGrid: !state.showGravityGrid })),
+  setGravityGridIntensity: (intensity) => set({ gravityGridIntensity: intensity }),
   
   incrementTime: (deltaTime) => set((state) => {
     if (state.isPaused) return state;

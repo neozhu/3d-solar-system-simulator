@@ -23,6 +23,7 @@ export interface PlanetData {
   hasAtmosphere?: boolean;
   satellites?: PlanetData[]; // Moons orbiting the planet
   isTidallyLocked?: boolean;
+  visualMass?: number; // Relative mass for spacetime gravitational deformation
 }
 
 const textureBaseUrl = `${import.meta.env.BASE_URL}textures`;
@@ -54,6 +55,7 @@ export const solarSystemData: PlanetData[] = [
     axialTiltDegrees: 7.25,
     eccentricity: 0,
     inclinationDeg: 0,
+    visualMass: 110.0,
     color: "#ffcc00",
     textureUrl: textureMap.sun,
     description: "The G-type main-sequence star at the center of our Solar System, accounting for 99.86% of the system's total mass."
@@ -71,6 +73,7 @@ export const solarSystemData: PlanetData[] = [
     inclinationDeg: 7.0,  // Significant inclination
     longitudeOfAscendingNodeDeg: 48.33,
     argumentOfPeriapsisDeg: 29.12,
+    visualMass: 6.0,
     color: "#a8a8a8",
     textureUrl: textureMap.mercury,
     hasAtmosphere: false,
@@ -89,6 +92,7 @@ export const solarSystemData: PlanetData[] = [
     inclinationDeg: 3.39,
     longitudeOfAscendingNodeDeg: 76.68,
     argumentOfPeriapsisDeg: 54.88,
+    visualMass: 13.0,
     color: "#e3bb76",
     textureUrl: textureMap.venus,
     hasAtmosphere: true,
@@ -107,6 +111,7 @@ export const solarSystemData: PlanetData[] = [
     inclinationDeg: 0.0, // Base reference plane (ecliptic)
     longitudeOfAscendingNodeDeg: 0.0,
     argumentOfPeriapsisDeg: 114.21,
+    visualMass: 14.0,
     color: "#4b9fe3",
     textureColor: "#ffffff",
     textureUrl: textureMap.earth,
@@ -124,6 +129,7 @@ export const solarSystemData: PlanetData[] = [
         axialTiltDegrees: 1.54,
         eccentricity: 0.0549,
         inclinationDeg: 5.14,
+        visualMass: 3.5,
         color: "#d1d5db",
         textureUrl: textureMap.moon,
         isTidallyLocked: true,
@@ -145,6 +151,7 @@ export const solarSystemData: PlanetData[] = [
     inclinationDeg: 1.85,
     longitudeOfAscendingNodeDeg: 49.56,
     argumentOfPeriapsisDeg: 286.5,
+    visualMass: 8.0,
     color: "#e27b58",
     textureColor: "#b15c3b",
     textureUrl: textureMap.mars,
@@ -192,6 +199,7 @@ export const solarSystemData: PlanetData[] = [
     inclinationDeg: 1.3,
     longitudeOfAscendingNodeDeg: 100.49,
     argumentOfPeriapsisDeg: 273.87,
+    visualMass: 42.0,
     color: "#c99a7b",
     textureUrl: textureMap.jupiter,
     satellites: [
@@ -263,6 +271,7 @@ export const solarSystemData: PlanetData[] = [
     inclinationDeg: 2.49,
     longitudeOfAscendingNodeDeg: 113.67,
     argumentOfPeriapsisDeg: 339.39,
+    visualMass: 32.0,
     color: "#ead6b8",
     textureUrl: textureMap.saturn,
     hasRings: true,
@@ -310,6 +319,7 @@ export const solarSystemData: PlanetData[] = [
     inclinationDeg: 0.77,
     longitudeOfAscendingNodeDeg: 74.01,
     argumentOfPeriapsisDeg: 96.99,
+    visualMass: 20.0,
     color: "#73d7df",
     textureUrl: textureMap.uranus,
     description: "An ice giant tilted sideways at 98 degrees, rotating almost perpendicular to its orbital plane."
@@ -327,6 +337,7 @@ export const solarSystemData: PlanetData[] = [
     inclinationDeg: 1.77,
     longitudeOfAscendingNodeDeg: 131.78,
     argumentOfPeriapsisDeg: 273.19,
+    visualMass: 20.0,
     color: "#4b70dd",
     textureUrl: textureMap.neptune,
     description: "The outermost known major planet, a deep azure world enduring supersonic winds reaching over 2,100 km/h."
@@ -344,6 +355,7 @@ export const solarSystemData: PlanetData[] = [
     inclinationDeg: 17.16, // High inclination
     longitudeOfAscendingNodeDeg: 110.30,
     argumentOfPeriapsisDeg: 113.83,
+    visualMass: 4.0,
     color: "#c29d7d",
     description: "The most famous dwarf planet in the Kuiper Belt, sporting a high orbital inclination and a heart-shaped nitrogen glacier (Tombaugh Regio)."
   },
@@ -360,6 +372,7 @@ export const solarSystemData: PlanetData[] = [
     inclinationDeg: 17.8,
     longitudeOfAscendingNodeDeg: 58.42,
     argumentOfPeriapsisDeg: 111.33,
+    visualMass: 3.0,
     color: "#a0e6ff",
     description: "The famous periodic comet visible from Earth every 75–76 years. Its orbit takes it from inside Venus's orbit out beyond Neptune."
   }

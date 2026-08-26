@@ -9,6 +9,7 @@ import SunMesh from './SunMesh';
 import PlanetMesh from './PlanetMesh';
 import CometMesh from './CometMesh';
 import AsteroidBelt from './AsteroidBelt';
+import SpacetimeGrid from './SpacetimeGrid';
 import SpaceBackground from './SpaceBackground';
 import { solarSystemData } from '../../data/solarSystemData';
 
@@ -26,6 +27,9 @@ const SolarSystemScene: React.FC = () => {
       <Suspense fallback={null}>
         <CameraDirector />
         
+        {/* Spacetime Gravitational Curvature & Potential Grid */}
+        <SpacetimeGrid />
+
         {/* Render Asteroid Belt between Mars and Jupiter */}
         <AsteroidBelt />
 
