@@ -1,6 +1,6 @@
 import React, { useRef, useMemo, useState, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Html, Trail, Line } from '@react-three/drei';
+import { Html, Line } from '@react-three/drei';
 import * as THREE from 'three';
 import { PlanetData } from '../../data/solarSystemData';
 import { useSimulationStore } from '../../store/useSimulationStore';
@@ -262,25 +262,12 @@ const PlanetMesh: React.FC<PlanetMeshProps> = ({ data }) => {
     <group>
       {/* 3D Elliptical Orbit Line */}
       {showOrbits && (
-        <Line points={orbitPoints} color="#ffffff" transparent opacity={0.08} lineWidth={1} />
+        <Line points={orbitPoints} color={isSelected ? data.color : '#9aafc4'} transparent opacity={isSelected ? 0.4 : 0.12} lineWidth={isSelected ? 1.2 : 0.7} depthWrite={false} />
       )}
       
       {/* Planet Group at Keplerian 3D Position */}
       <group ref={planetGroupRef}>
         
-        {/* Dynamic Orbital Motion Trail */}
-        {showOrbits && (
-          <Trail
-            width={scaledRadius * 2.5}
-            length={120}
-            color={new THREE.Color(data.color)}
-            attenuation={(t) => t * t}
-            target={meshRef as React.MutableRefObject<THREE.Object3D>}
-          >
-            <meshBasicMaterial opacity={0.25} transparent />
-          </Trail>
-        )}
-
         {/* Tilted Axis Group (Holds planet, atmosphere, and rings at axial tilt) */}
         <group rotation={[0, 0, THREE.MathUtils.degToRad(data.axialTiltDegrees)]}>
           
@@ -351,7 +338,7 @@ const PlanetMesh: React.FC<PlanetMeshProps> = ({ data }) => {
 
         {/* Natural Satellites / Moons */}
         {data.satellites && data.satellites.map(sat => (
-          <SatelliteMesh key={sat.id} data={sat} />
+          <SatelliteMesh key={sat.id} data={sat} parent={data} />
         ))}
 
         {/* 2D Billboard HTML Label */}

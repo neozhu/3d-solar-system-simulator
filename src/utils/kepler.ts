@@ -42,7 +42,8 @@ export function solveKepler(M: number, e: number): number {
  */
 export function calculateKeplerianPosition(
   elements: KeplerianElements,
-  timeElapsedDays: number
+  timeElapsedDays: number,
+  scaleDistance: (distanceAU: number) => number = getScaledDistance
 ): THREE.Vector3 {
   const {
     semiMajorAxisAU,
@@ -76,7 +77,7 @@ export function calculateKeplerianPosition(
 
   // Scaled distance in scene units
   // Map AU to scaled distance using our existing non-linear scaling curve
-  const scaledR = getScaledDistance(rAU);
+  const scaledR = scaleDistance(rAU);
 
   // Position in orbital plane (xOrb, zOrb)
   const xOrb = scaledR * Math.cos(trueAnomaly);
@@ -113,7 +114,8 @@ export function calculateKeplerianPosition(
  */
 export function generateKeplerianOrbitPoints(
   elements: KeplerianElements,
-  segments: number = 180
+  segments: number = 180,
+  scaleDistance: (distanceAU: number) => number = getScaledDistance
 ): THREE.Vector3[] {
   const points: THREE.Vector3[] = [];
   const {
@@ -151,7 +153,7 @@ export function generateKeplerianOrbitPoints(
 
     // Radius at this point
     const rAU = semiMajorAxisAU * (1 - e * cosE);
-    const scaledR = getScaledDistance(rAU);
+    const scaledR = scaleDistance(rAU);
 
     const xOrb = scaledR * Math.cos(trueAnomaly);
     const zOrb = scaledR * Math.sin(trueAnomaly);

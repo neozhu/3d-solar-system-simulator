@@ -1,16 +1,18 @@
 import React, { useRef, useMemo, useState, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Trail, Line, Html } from '@react-three/drei';
+import { Line, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { PlanetData } from '../../data/solarSystemData';
 import { useSimulationStore } from '../../store/useSimulationStore';
-import { getScaledRadius, getScaledSatelliteDistance, calculateOrbitalAngle, calculateRotationAngle } from '../../utils/scaling';
+import { getScaledRadius, getScaledSatelliteDistance, calculateRotationAngle } from '../../utils/scaling';
+import { calculateKeplerianPosition, generateKeplerianOrbitPoints } from '../../utils/kepler';
 
 interface SatelliteMeshProps {
   data: PlanetData;
+  parent: PlanetData;
 }
 
-const SatelliteMesh: React.FC<SatelliteMeshProps> = ({ data }) => {
+const SatelliteMesh: React.FC<SatelliteMeshProps> = ({ data, parent }) => {
   const meshRef = useRef<THREE.Mesh>(null);
   const orbitGroupRef = useRef<THREE.Group>(null);
   
@@ -20,9 +22,21 @@ const SatelliteMesh: React.FC<SatelliteMeshProps> = ({ data }) => {
   const setSelectedPlanetId = useSimulationStore(state => state.setSelectedPlanetId);
   
   const isSelected = selectedPlanetId === data.id;
+  const showLocalOrbit = showOrbits && (isSelected || selectedPlanetId === parent.id);
 
   const scaledRadius = Math.max(getScaledRadius(data.radiusKm, data.id), 0.25);
-  const scaledDistance = Math.max(getScaledSatelliteDistance(data.distanceFromSunAU), 2.2);
+  const parentRadius = getScaledRadius(parent.radiusKm, parent.id);
+  const scaleDistance = useMemo(() => (distanceAU: number) =>
+    getScaledSatelliteDistance(distanceAU, parentRadius, parent.hasRings),
+  [parentRadius, parent.hasRings]);
+  const orbitalElements = useMemo(() => ({
+    semiMajorAxisAU: data.distanceFromSunAU,
+    eccentricity: data.eccentricity ?? 0,
+    inclinationDeg: data.inclinationDeg ?? 0,
+    longitudeOfAscendingNodeDeg: data.longitudeOfAscendingNodeDeg ?? 0,
+    argumentOfPeriapsisDeg: data.argumentOfPeriapsisDeg ?? 0,
+    orbitalPeriodDays: data.orbitalPeriodDays,
+  }), [data]);
   
   const [colorMap, setColorMap] = useState<THREE.Texture | null>(null);
 
@@ -37,26 +51,18 @@ const SatelliteMesh: React.FC<SatelliteMeshProps> = ({ data }) => {
   }, [data.textureUrl]);
 
   // Orbit path points around the planet
-  const orbitPoints = useMemo(() => {
-    const points = [];
-    const segments = 64;
-    const inc = THREE.MathUtils.degToRad(data.inclinationDeg ?? 0);
-    for (let i = 0; i <= segments; i++) {
-      const theta = (i / segments) * Math.PI * 2;
-      const x = Math.cos(theta) * scaledDistance;
-      const z = Math.sin(theta) * scaledDistance;
-      const y = Math.sin(theta) * scaledDistance * Math.sin(inc);
-      points.push(new THREE.Vector3(x, y, z));
-    }
-    return points;
-  }, [scaledDistance, data.inclinationDeg]);
+  const orbitPoints = useMemo(() =>
+    generateKeplerianOrbitPoints(orbitalElements, 96, scaleDistance),
+  [orbitalElements, scaleDistance]);
 
   useFrame(() => {
     const timeElapsedDays = useSimulationStore.getState().globalTimeElapsedDays;
     
-    // Orbital rotation around parent planet
+    // Use the same local orbit calculation as the path and gravity grid.
     if (orbitGroupRef.current) {
-      orbitGroupRef.current.rotation.y = calculateOrbitalAngle(data.orbitalPeriodDays, timeElapsedDays);
+      const position = calculateKeplerianPosition(orbitalElements, timeElapsedDays, scaleDistance);
+      orbitGroupRef.current.position.copy(position);
+      orbitGroupRef.current.rotation.y = -Math.atan2(position.z, position.x);
     }
     
     // Self rotation
@@ -77,28 +83,14 @@ const SatelliteMesh: React.FC<SatelliteMeshProps> = ({ data }) => {
   return (
     <group>
       {/* Static Orbit Line around Parent Planet */}
-      {showOrbits && (
-        <Line points={orbitPoints} color="#ffffff" transparent opacity={0.12} lineWidth={1} />
+      {showLocalOrbit && (
+        <Line points={orbitPoints} color={data.color} transparent opacity={isSelected ? 0.5 : 0.2} lineWidth={isSelected ? 1.2 : 0.7} depthWrite={false} />
       )}
       
-      {/* Satellite Group rotating around planet */}
+      {/* Satellite Group following its local orbit */}
       <group ref={orbitGroupRef}>
         
-        {/* Dynamic Comet-like Trail */}
-        {showOrbits && (
-          <Trail
-            width={scaledRadius * 1.5}
-            length={40}
-            color={new THREE.Color(data.color)}
-            attenuation={(t) => t * t}
-            target={meshRef as React.MutableRefObject<THREE.Object3D>}
-          >
-            <meshBasicMaterial opacity={0.25} transparent />
-          </Trail>
-        )}
-
-        {/* Offset satellite by distance */}
-        <group position={[scaledDistance, 0, 0]}>
+        <group>
           <group rotation={[0, 0, THREE.MathUtils.degToRad(data.axialTiltDegrees || 0)]}>
             <mesh 
               ref={meshRef} 

@@ -182,7 +182,7 @@ void main() {
   color = mix(color, deepRed, smoothstep(0.4, 0.8, normD));
   color = mix(color, hotYellow * 1.3, cmeTotal * 0.6);
   
-  gl_FragColor = vec4(color, totalAlpha * 0.9);
+  gl_FragColor = vec4(color, totalAlpha * 0.65);
 }
 `;
 

@@ -8,7 +8,7 @@ const BASE_DISTANCE_AU = 15; // 1 AU in Three.js units
 // Adjust size. Gas giants are scaled down slightly, Sun is scaled down significantly.
 export const getScaledRadius = (realRadiusKm: number, id: string): number => {
   if (id === 'sun') {
-    return BASE_EARTH_RADIUS * 15; // Sun is huge but we cap it so it doesn't eclipse inner planets
+    return BASE_EARTH_RADIUS * 9; // Keep the Sun prominent without crowding the inner planets
   }
   
   const scaleRatio = realRadiusKm / 6371.0; // Ratio to Earth
@@ -30,17 +30,17 @@ export const getScaledDistance = (distanceAU: number): number => {
   // A gentle logarithmic compression for distance
   const compressedAU = Math.pow(distanceAU, 0.6);
   
-  // Ensure the sun's surface doesn't swallow inner planets (Sun radius is 15)
+  // Leave space between the Sun and the inner planets
   const MIN_DISTANCE_OFFSET = 20; 
   
   return MIN_DISTANCE_OFFSET + (compressedAU * BASE_DISTANCE_AU);
 };
 
-export const getScaledSatelliteDistance = (distanceAU: number): number => {
+export const getScaledSatelliteDistance = (distanceAU: number, parentRadius: number, hasRings = false): number => {
   if (distanceAU === 0) return 0;
-  // Reduce satellite distance so the orbit doesn't cross into neighboring planets' paths.
-  // 0.1 AU -> 2.0 units away from center (Earth radius is ~1 unit)
-  return distanceAU * 20; 
+  // Keep moons outside their parent's surface/rings and preserve separate orbit lanes.
+  const clearanceRadius = parentRadius * (hasRings ? 2.7 : 1);
+  return clearanceRadius + 1 + distanceAU * 30;
 };
 
 // Returns angle in radians for orbital position
